@@ -26,10 +26,24 @@ public class Main {
             if (!parts.isEmpty()) {
                 Map<String, Integer> last = parts.get(parts.size() - 1);
                 double q = Modularity.compute(g, last);
-                try (FileWriter fw = new FileWriter(out + "_partition.txt")) {
+                // Ensure output directories exist (robust)
+                java.io.File outPrefix = new java.io.File(out);
+                java.io.File outParent = outPrefix.getParentFile();
+                if (outParent != null && !outParent.exists()) {
+                    boolean ok = outParent.mkdirs();
+                    if (!ok && !outParent.exists()) System.err.println("Warning: could not create directory: " + outParent);
+                }
+                java.io.File partFile = new java.io.File(out + "_partition.txt");
+                java.io.File metricsFile = new java.io.File(out + "_metrics.txt");
+                java.io.File partParent = partFile.getParentFile();
+                java.io.File metricsParent = metricsFile.getParentFile();
+                if (partParent != null && !partParent.exists()) partParent.mkdirs();
+                if (metricsParent != null && !metricsParent.exists()) metricsParent.mkdirs();
+
+                try (FileWriter fw = new FileWriter(partFile)) {
                     for (Map.Entry<String, Integer> e : last.entrySet()) fw.write(e.getKey() + "\t" + e.getValue() + "\n");
                 }
-                try (FileWriter fw = new FileWriter(out + "_metrics.txt")) {
+                try (FileWriter fw = new FileWriter(metricsFile)) {
                     fw.write("modularity\t" + q + "\n");
                 }
                 System.out.println("Wrote partition and metrics to " + out + "_* files");
