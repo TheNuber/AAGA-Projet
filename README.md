@@ -49,3 +49,7 @@ mvn -DskipTests package
 
 
 java -jar target\aaga-projet-0.1.0-SNAPSHOT.jar -i data\sample.edgelist -o results\sample
+
+
+
+hello
