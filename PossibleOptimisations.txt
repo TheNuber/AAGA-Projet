@@ -1,0 +1,20 @@
+Recherche clé
+Riondato & Kornaropoulos, 2014
+
+Article : “Fast Approximation of Betweenness Centrality Through Sampling”
+
+Idée :
+
+Au lieu de calculer la betweenness exacte pour tous les sommets (coûteux), on choisit un échantillon aléatoire de sources.
+
+On calcule la contribution des plus courts chemins seulement depuis ces sources.
+
+On obtient une approximation avec un intervalle de confiance probabiliste.
+
+Preuve :
+
+Les auteurs donnent des bornes théoriques sur l’erreur maximale ε et la probabilité δ que l’erreur dépasse ε.
+
+La complexité passe de O(VE) à O(kE), avec k = nombre de sources échantillonnées.
+
+Expérimentalement, la précision est très proche de la version exacte, surtout sur les grands graphes.
