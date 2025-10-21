@@ -29,6 +29,42 @@ public class SimpleGraph {
     private int edgeCount = 0;
 
     /**
+     * Calcule le diamètre du graphe (plus longue distance minimale entre deux sommets).
+     * Retourne 0 pour un graphe vide ou à un seul sommet.
+     */
+    public int getVertexDiameter() {
+        int diameter = 0;
+        for (String source : vertices()) {
+            Map<String, Integer> dist = bfsDistances(source);
+            for (int d : dist.values()) {
+                if (d > diameter) diameter = d;
+            }
+        }
+        return diameter;
+    }
+
+    /**
+     * BFS depuis un sommet source, retourne les distances vers tous les sommets atteignables.
+     */
+    private Map<String, Integer> bfsDistances(String source) {
+        Map<String, Integer> dist = new HashMap<>();
+        Queue<String> queue = new ArrayDeque<>();
+        dist.put(source, 0);
+        queue.add(source);
+        while (!queue.isEmpty()) {
+            String v = queue.remove();
+            int d = dist.get(v);
+            for (String w : neighbors(v)) {
+                if (!dist.containsKey(w)) {
+                    dist.put(w, d + 1);
+                    queue.add(w);
+                }
+            }
+        }
+        return dist;
+    }
+
+    /**
      * Ensemble non modifiable des sommets présents dans le graphe.
      * Utiliser addVertex/addEdge pour le modifier.
      */
