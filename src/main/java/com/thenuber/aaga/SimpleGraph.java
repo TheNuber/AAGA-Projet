@@ -11,58 +11,32 @@ import java.util.*;
  *      * edgeCount compte le nombre d'arêtes uniques (chaque arête {a,b} vaut 1).
  *      * Pas d'arêtes multiples: (a,b) est ajoutée au plus une fois.
  *      * Pas de boucle: on interdit a = b dans addEdge.
- *
- *  Méthodes principales:
- *   - addVertex(v): crée un sommet (si absent) avec un ensemble de voisins vide.
- *   - addEdge(a,b): ajoute l'arête {a,b} si elle n'existe pas, met à jour l'adjacence symétrique
- *                   et incrémente edgeCount. Ignore les boucles (a == b).
- *   - removeEdge(a,b): supprime l'arête si elle existe et décrémente edgeCount.
- *   - containsEdge(a,b): teste la présence de l'arête {a,b}.
- *   - neighbors(v): renvoie une vue non modifiable de l'ensemble des voisins de v.
- *   - edges(): retourne la liste des arêtes uniques (une seule direction) en parcourant l'adjacence
- *              et en ne gardant que les paires (u,v) avec u < v (ordre lexicographique).
  */
 public class SimpleGraph {
     // Adjacence: chaque sommet pointe vers un set de voisins (pas de doublons, accès O(1) moyen)
-    private final Map<String, Set<String>> adj = new HashMap<>();
+    private final Map<String, Set<String>> adj;
     // Nombre d'arêtes (chaque arête non orientée compte pour 1)
-    private int edgeCount = 0;
+    private int edgeCount;
+
 
     /**
-     * Calcule le diamètre du graphe (plus longue distance minimale entre deux sommets).
-     * Retourne 0 pour un graphe vide ou à un seul sommet.
+     * Nouveau graph 
      */
-    public int getVertexDiameter() {
-        int diameter = 0;
-        for (String source : vertices()) {
-            Map<String, Integer> dist = bfsDistances(source);
-            for (int d : dist.values()) {
-                if (d > diameter) diameter = d;
-            }
-        }
-        return diameter;
+    public SimpleGraph() {
+        this.adj = new HashMap<>();
+        this.edgeCount = 0;
     }
 
     /**
-     * BFS depuis un sommet source, retourne les distances vers tous les sommets atteignables.
+     * Deepcopy du graph g
      */
-    private Map<String, Integer> bfsDistances(String source) {
-        Map<String, Integer> dist = new HashMap<>();
-        Queue<String> queue = new ArrayDeque<>();
-        dist.put(source, 0);
-        queue.add(source);
-        while (!queue.isEmpty()) {
-            String v = queue.remove();
-            int d = dist.get(v);
-            for (String w : neighbors(v)) {
-                if (!dist.containsKey(w)) {
-                    dist.put(w, d + 1);
-                    queue.add(w);
-                }
-            }
-        }
-        return dist;
+    public SimpleGraph(SimpleGraph g) {
+        this.adj = new HashMap<>();
+        g.adj.forEach((k, v) -> this.adj.put(k, new HashSet<>(v)));
+        this.edgeCount = g.edgeCount;
     }
+
+
 
     /**
      * Ensemble non modifiable des sommets présents dans le graphe.
@@ -83,7 +57,7 @@ public class SimpleGraph {
     /**
      * Ajoute un sommet s'il n'existe pas déjà.
      */
-    public void addVertex(String v) { adj.computeIfAbsent(v, k -> new HashSet<>()); }
+    public void addVertex(String v) { adj.putIfAbsent(v, new HashSet<>()); }
 
     /**
      * Teste la présence de l'arête {a,b}.
@@ -124,7 +98,9 @@ public class SimpleGraph {
     /**
      * Retourne une vue non modifiable de l'ensemble des voisins de v (ensemble vide si v absent).
      */
-    public Set<String> neighbors(String v) { return Collections.unmodifiableSet(adj.getOrDefault(v, Collections.emptySet())); }
+    public Set<String> neighbors(String v) { 
+        return Collections.unmodifiableSet(adj.getOrDefault(v, Collections.emptySet())); 
+    }
 
     /**
      * Retourne le degree du noeud v
@@ -137,12 +113,86 @@ public class SimpleGraph {
      */
     public List<Edge> edges() {
         List<Edge> list = new ArrayList<>();
-        for (var e : adj.entrySet()) {
-            String u = e.getKey();
-            for (String v : e.getValue()) {
-                if (u.compareTo(v) < 0) list.add(new Edge(u,v));
+
+        for (String u : adj.keySet()) {
+            for (String v : adj.get(u)) {
+                if (u.compareTo(v) < 0) {
+                    list.add(new Edge(u,v));
+                }
             }
         }
         return list;
+    }
+
+
+    /**
+     * Calcule le diamètre du graphe (plus longue distance minimale entre deux sommets).
+     * Retourne 0 pour un graphe vide ou à un seul sommet.
+     */
+    public int getVertexDiameter() {
+        int diameter = 0;
+        for (String source : vertices()) {
+            Map<String, Integer> distances = getDistances(source);
+            for (int d : distances.values()) {
+                if (d > diameter) diameter = d;
+            }
+        }
+        return diameter;
+    }
+
+    /**
+     * Calculates shoretest distances in an unweighted graph
+     */
+    private Map<String, Integer> getDistances(String source) {
+        Map<String, Integer> distances = new HashMap<>();
+        Queue<String> queue = new ArrayDeque<>();
+        distances.put(source, 0);
+        queue.add(source);
+        while (!queue.isEmpty()) {
+            String v = queue.remove();
+            for (String w : neighbors(v)) {
+                if (!distances.containsKey(w)) {
+                    distances.put(w, distances.get(v) + 1);
+                    queue.add(w);
+                }
+            }
+        }
+        return distances;
+    }
+
+
+    /**
+     * Returns a map that assigns a connected component id to each node
+     */
+    public Map<String, Integer> getConnectedComponents() {
+
+        // Assigns an connected component id to each node, 
+        Map<String, Integer> cc_partition = new HashMap<>();
+
+        int component_id = 0; 
+        for (String n : vertices()) {
+            // Skip nodes already visited
+            if (cc_partition.containsKey(n))
+                continue;
+
+            // BFS: assign current component_id to all reachable nodes from n
+            Queue<String> queue = new ArrayDeque<>();
+            queue.add(n);
+            cc_partition.put(n, component_id);
+            while (!queue.isEmpty()) {
+                String u = queue.remove();
+                for (String v : neighbors(u)) {
+                    if (!cc_partition.containsKey(v)) {
+                        cc_partition.put(v, component_id);
+                        queue.add(v);
+                    }
+                }
+            }
+
+            // Look for next component
+            component_id++;
+        }
+
+        return cc_partition;
     }
 }

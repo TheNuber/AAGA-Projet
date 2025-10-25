@@ -5,7 +5,8 @@ import java.util.*;
 
 public class Main {
     private static void printHelp() {
-        System.out.println("Usage: java -jar aaga-projet.jar -i <input> [-d <delimiterRegex>] [-o <outPrefix>] [-a <alg>]");
+        System.out.println(
+                "Usage: java -jar aaga-projet.jar -i <input> [-d <delimiterRegex>] [-o <outPrefix>] [-a <alg>]");
         System.out.println("  -i  input edge list file (two columns per line)");
         System.out.println("  -d  delimiter regex (default: \\t)");
         System.out.println("  -o  output prefix (default: out)");
@@ -13,61 +14,108 @@ public class Main {
     }
 
     public static void main(String[] args) throws Exception {
-        Map<String, String> opts = parseArgs(args);
-        if (!opts.containsKey("i")) { printHelp(); return; }
-        String input = opts.get("i");
-        String delim = opts.getOrDefault("d", "\\t");
-        String out = opts.getOrDefault("o", "out");
-        String alg = opts.getOrDefault("a", "gn");
 
-        SimpleGraph g = GraphLoader.loadEdgeList(input, delim);
-        if ("gn".equals(alg)) {
+        // Parse args
+
+        Map<String, String> opts = parseArgs(args);
+        if (!opts.containsKey("i")) {
+            printHelp();
+            return;
+        }
+
+        String inputFilePath = opts.get("i");
+        String delim = opts.getOrDefault("d", "\\t");
+        String outputFilePath = opts.getOrDefault("o", "out");
+        String algorithm = opts.getOrDefault("a", "gn");
+
+
+        // Read input graph
+
+        SimpleGraph g = GraphLoader.loadEdgeList(inputFilePath, delim);
+
+
+        // Calculate betweenness
+
+        Map<String, Integer> partition = null;
+        double modularity = -1.0;
+
+        if (algorithm.equals("gn")) {
+            // Girvan-Newmann algorithm
             List<Map<String, Integer>> parts = GirvanNewman.run(g);
             if (!parts.isEmpty()) {
-                Map<String, Integer> last = parts.get(parts.size() - 1);
-                double q = Modularity.compute(g, last);
-                // Ensure output directories exist (robust)
-                java.io.File outPrefix = new java.io.File(out);
-                java.io.File outParent = outPrefix.getParentFile();
-                if (outParent != null && !outParent.exists()) {
-                    boolean ok = outParent.mkdirs();
-                    if (!ok && !outParent.exists()) System.err.println("Warning: could not create directory: " + outParent);
-                }
-                java.io.File partFile = new java.io.File(out + "_partition.txt");
-                java.io.File metricsFile = new java.io.File(out + "_metrics.txt");
-                java.io.File partParent = partFile.getParentFile();
-                java.io.File metricsParent = metricsFile.getParentFile();
-                if (partParent != null && !partParent.exists()) partParent.mkdirs();
-                if (metricsParent != null && !metricsParent.exists()) metricsParent.mkdirs();
-
-                try (FileWriter fw = new FileWriter(partFile)) {
-                    for (Map.Entry<String, Integer> e : last.entrySet()) fw.write(e.getKey() + "\t" + e.getValue() + "\n");
-                }
-                try (FileWriter fw = new FileWriter(metricsFile)) {
-                    fw.write("modularity\t" + q + "\n");
-                }
-                System.out.println("Wrote partition and metrics to " + out + "_* files");
-
-                // Example of running Betweenness Sampling Algorithm
-                BetweennessSamplingAlgo bsa = new BetweennessSamplingAlgo();
-                bsa.run(g);
+                partition = parts.get(parts.size() - 1);
+                modularity = Modularity.compute(g, partition);
             } else {
                 System.out.println("No partitions produced.");
             }
+        } else if (algorithm.equals("bsa")) {
+            // Betweenness sampling algorithm
+            // TODO
+
+            // Example of running Betweenness Sampling Algorithm
+            BetweennessSamplingAlgo bsa = new BetweennessSamplingAlgo();
+            bsa.run(g);
+
         } else {
-            System.out.println("Unknown algorithm: " + alg);
+            System.out.println("Unknown algorithm: " + algorithm);
         }
+
+
+        // Write results
+
+        // Check that output directory exists
+
+        if (!checkDirectory(outputFilePath)) {
+            System.err.println("Warning: could not create directory for: " + outputFilePath);
+        }
+
+        
+        // Create output files
+
+        String partitionFilePath = outputFilePath + "_partition.txt";
+        String metricsFilePath = outputFilePath + "_metrics.txt";
+
+        java.io.File partitionFile = new java.io.File(partitionFilePath);
+        java.io.File metricsFile = new java.io.File(metricsFilePath);
+
+
+        // Write output
+
+        try (FileWriter fw = new FileWriter(partitionFile)) {
+            for (Map.Entry<String, Integer> e : partition.entrySet())
+                fw.write(e.getKey() + "\t" + e.getValue() + "\n");
+        }
+        try (FileWriter fw = new FileWriter(metricsFile)) {
+            fw.write("modularity\t" + modularity + "\n");
+        }
+
+
+        System.out.println("Wrote partition and metrics to " + outputFilePath + "_* files");
+
     }
 
     private static Map<String, String> parseArgs(String[] args) {
         Map<String, String> m = new HashMap<>();
         for (int i = 0; i < args.length; i++) {
             String a = args[i];
-            if (a.equals("-i") && i + 1 < args.length) m.put("i", args[++i]);
-            else if (a.equals("-d") && i + 1 < args.length) m.put("d", args[++i]);
-            else if (a.equals("-o") && i + 1 < args.length) m.put("o", args[++i]);
-            else if (a.equals("-a") && i + 1 < args.length) m.put("a", args[++i]);
+            if (a.equals("-i") && i + 1 < args.length)
+                m.put("i", args[++i]);
+            else if (a.equals("-d") && i + 1 < args.length)
+                m.put("d", args[++i]);
+            else if (a.equals("-o") && i + 1 < args.length)
+                m.put("o", args[++i]);
+            else if (a.equals("-a") && i + 1 < args.length)
+                m.put("a", args[++i]);
         }
         return m;
+    }
+
+    private static boolean checkDirectory(String filepath) {
+        java.io.File outputDirectory = new java.io.File(filepath).getParentFile();
+        boolean ok = outputDirectory != null && outputDirectory.exists();
+        if (!ok) {
+            ok = outputDirectory.mkdirs();
+        }
+        return ok && outputDirectory != null && outputDirectory.exists();
     }
 }
