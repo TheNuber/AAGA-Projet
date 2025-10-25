@@ -1,5 +1,5 @@
 # Java/Maven
-target/
+target/*
 dependency-reduced-pom.xml
 pom.xml.tag
 pom.xml.releaseBackup
@@ -9,14 +9,14 @@ release.properties
 .mvn/timing.properties
 
 # IDEs and editors
-.idea/
+.idea/*
 *.iml
 *.ipr
 *.iws
 .classpath
 .project
-.settings/
-.vscode/
+.settings/*
+.vscode/*
 
 # OS files
 .DS_Store
@@ -31,12 +31,12 @@ replay_pid*
 *.hprof
 
 # Build/test reports (often inside target/ anyway)
-surefire-reports/
-failsafe-reports/
+surefire-reports/*
+failsafe-reports/*
 
 # App outputs
-results/
-out/
+results/*
+out/*
 *.out
 *.tmp
 

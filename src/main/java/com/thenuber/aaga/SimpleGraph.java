@@ -127,6 +127,11 @@ public class SimpleGraph {
     public Set<String> neighbors(String v) { return Collections.unmodifiableSet(adj.getOrDefault(v, Collections.emptySet())); }
 
     /**
+     * Retourne le degree du noeud v
+     */
+    public int degree(String v) { return neighbors(v).size(); }
+    
+    /**
      * Liste les arêtes uniques du graphe sous forme d'objets Edge.
      * Pour éviter les doublons, on ne retient que les paires (u,v) avec u < v (ordre lexicographique).
      */
