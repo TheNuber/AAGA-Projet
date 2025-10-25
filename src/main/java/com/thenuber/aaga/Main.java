@@ -47,6 +47,10 @@ public class Main {
                     fw.write("modularity\t" + q + "\n");
                 }
                 System.out.println("Wrote partition and metrics to " + out + "_* files");
+
+                // Example of running Betweenness Sampling Algorithm
+                BetweennessSamplingAlgo bsa = new BetweennessSamplingAlgo();
+                bsa.run(g);
             } else {
                 System.out.println("No partitions produced.");
             }
