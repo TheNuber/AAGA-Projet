@@ -77,59 +77,65 @@ public class GirvanNewman {
      * - Pour graphe non orienté, division finale par 2.
      */
     public static Map<Edge, Double> edgeBetweenness(SimpleGraph g) {
-        Map<Edge, Double> bc = new HashMap<>(); // betweenness par arête
+        Map<Edge, Double> edge_betweenness = new HashMap<>(); // betweenness par arête
         for (Edge e : g.edges())
-            bc.put(e, 0.0);
+            edge_betweenness.put(e, 0.0);
+
         for (String s : g.vertices()) {
             // Phase BFS (plus courts chemins depuis s)
             Deque<String> stack = new ArrayDeque<>(); // ordre de visite pour l'accumulation
             Map<String, List<String>> pred = new HashMap<>(); // prédécesseurs de w sur les plus courts chemins
-            Map<String, Integer> dist = new HashMap<>(); // distances depuis s
+            Map<String, Integer> distances = new HashMap<>(); // distances depuis s
             Map<String, Integer> sigma = new HashMap<>(); // nb. de plus courts chemins de s vers v
             for (String v : g.vertices()) {
                 pred.put(v, new ArrayList<>());
-                dist.put(v, -1);
+                distances.put(v, -1);
                 sigma.put(v, 0);
             }
-            dist.put(s, 0);
+
+            distances.put(s, 0);
             sigma.put(s, 1);
-            Queue<String> q = new ArrayDeque<>();
-            q.add(s);
-            while (!q.isEmpty()) {
-                String v = q.remove();
+            Queue<String> queue = new ArrayDeque<>();
+            queue.add(s);
+            while (!queue.isEmpty()) {
+                String v = queue.remove();
                 stack.push(v);
                 for (String w : g.neighbors(v)) {
                     // Découverte de w
-                    if (dist.get(w) < 0) {
-                        dist.put(w, dist.get(v) + 1);
-                        q.add(w);
+                    if (distances.get(w) < 0) {
+                        distances.put(w, distances.get(v) + 1);
+                        queue.add(w);
                     }
                     // V est un prédécesseur valide de w si w est à une distance +1
-                    if (dist.get(w) == dist.get(v) + 1) {
+                    if (distances.get(w) == distances.get(v) + 1) {
                         sigma.put(w, sigma.get(w) + sigma.get(v));
                         pred.get(w).add(v);
                     }
                 }
             }
+
             // Phase d'accumulation: contributions en remontant depuis les plus éloignés
             Map<String, Double> delta = new HashMap<>();
             for (String v : g.vertices())
                 delta.put(v, 0.0);
+
             while (!stack.isEmpty()) {
                 String w = stack.pop();
                 for (String v : pred.get(w)) {
-                    // Contribution d'une arête (v,w) sur les plus courts chemins via w
-                    double c = (sigma.get(w) == 0 ? 0.0 : ((double) sigma.get(v) / (double) sigma.get(w)) * (1.0 + delta.get(w)));
-                    Edge e = new Edge(v, w);
-                    bc.put(e, bc.getOrDefault(e, 0.0) + c);
-                    delta.put(v, delta.get(v) + c);
+                    if (sigma.get(w) != 0) {
+                        double sv_sw = (double) sigma.get(v) / (double) sigma.get(w);
+                        double dw = delta.get(w);
+                        delta.put(v, delta.get(v) + sv_sw * (1.0 + dw));
+                        Edge e = new Edge(v, w);
+                        edge_betweenness.put(e, edge_betweenness.get(e) + sv_sw * dw);
+                    }
                 }
             }
         }
         // Graphe non orienté: chaque chemin contribue deux fois → division par 2
-        for (Edge e : new ArrayList<>(bc.keySet())) {
-            bc.put(e, bc.get(e) / 2.0);
+        for (Edge e : new ArrayList<>(edge_betweenness.keySet())) {
+            edge_betweenness.put(e, edge_betweenness.get(e) / 2.0);
         }
-        return bc;
+        return edge_betweenness;
     }
 }
