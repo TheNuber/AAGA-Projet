@@ -140,6 +140,33 @@ public class SimpleGraph {
         return diameter;
     }
 
+    private static final int VD_SAMPLES = 10;
+    /**
+     * Approximate the vertex diameter through the mean of repeated samples 
+     * Each sample is the length of the concatenation of the two longest shortest paths from a random vertex
+     */
+    public int getVertexDiameterApproximation(int n_samples) {
+
+        int VD = 0;
+        for (int i = 0; i < n_samples; i++) {
+            String source = randomNode();
+            ArrayList<Integer> distanceValues = new ArrayList<>(getDistances(source).values());
+            distanceValues.sort((x1, x2) -> - Integer.compare(x1,x2));
+            
+            // Sometimes the random node is a leaf, so there is only one possible path
+            int diameterSample = distanceValues.size() < 2 ? distanceValues.get(0) : distanceValues.get(0) + distanceValues.get(1);
+            VD += diameterSample;
+        }
+        // Ceil out the integer division (for example 0.555 -> 1)
+        return (VD+n_samples) / n_samples;
+    }
+    public int getVertexDiameterApproximation() { return getVertexDiameterApproximation(VD_SAMPLES); }
+
+    public String randomNode() {
+        Random rng = new Random();
+        return (String) this.adj.keySet().toArray()[rng.nextInt(vertexCount())];
+    }
+
     /**
      * Calculates shoretest distances in an unweighted graph
      */
