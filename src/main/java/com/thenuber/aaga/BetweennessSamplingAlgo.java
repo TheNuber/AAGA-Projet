@@ -35,7 +35,7 @@ public class BetweennessSamplingAlgo {
         double delta = 0.3; // probability parameter : smaller = more reliable but increased sample size
         double c = 1.0; // constant (can be adjusted)
 
-        int vertexDiameter = g.getVertexDiameter();
+        int vertexDiameter = g.getVertexDiameterApproximation();
         System.out.println("Vertex diameter VD(G): " + vertexDiameter);
 
         // 0. Calculate sample size r
