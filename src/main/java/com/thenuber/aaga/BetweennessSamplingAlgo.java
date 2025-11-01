@@ -42,7 +42,7 @@ public class BetweennessSamplingAlgo {
         int r = computeSampleSize(vertexDiameter, epsilon, delta, c);
         System.out.println("Sample size r: " + r);
 
-        Set<String> verticies = g.vertices();
+        Set<String> vertices = g.vertices();
         Random rnd = new Random();
 
         int i = 0;
@@ -52,13 +52,13 @@ public class BetweennessSamplingAlgo {
 
         // 1. Repeating r times
         for (int k = 0; k < r; k++) {
-            i = rnd.nextInt(verticies.size());
-            j = rnd.nextInt(verticies.size());
+            i = rnd.nextInt(vertices.size());
+            j = rnd.nextInt(vertices.size());
             while (i == j) {
-                j = rnd.nextInt(verticies.size());
+                j = rnd.nextInt(vertices.size());
             }
-            String u = (String) verticies.toArray()[i];
-            String v = (String) verticies.toArray()[j];
+            String u = (String) vertices.toArray()[i];
+            String v = (String) vertices.toArray()[j];
 
             // 2. Calculate shortest paths between u and v (all shortest paths S_uv)
             List<List<String>> suv = computeAllShortestPaths(g, u, v);
