@@ -44,8 +44,23 @@ public class Main {
             List<Map<Vertex, Integer>> parts = GirvanNewman.run(g);
 
             if (!parts.isEmpty()) {
-                partition = parts.get(parts.size() - 1);
-                modularity = Modularity.compute(g, partition);
+                // Select the partition with the highest modularity (best cut),
+                // instead of taking the last partition which is usually trivial
+                double bestQ = Double.NEGATIVE_INFINITY;
+                Map<Vertex, Integer> bestPartition = null;
+                for (Map<Vertex, Integer> p : parts) {
+                    double q = Modularity.compute(g, p);
+                    if (q > bestQ) {
+                        bestQ = q;
+                        bestPartition = p;
+                    }
+                }
+                if (bestPartition != null) {
+                    partition = bestPartition;
+                    modularity = bestQ;
+                } else {
+                    System.out.println("No partitions produced.");
+                }
             } else {
                 System.out.println("No partitions produced.");
             }
