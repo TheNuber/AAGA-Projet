@@ -4,7 +4,7 @@ import java.util.*;
 
 /**
  * SimpleGraph
- *  - Graphe simple, non orienté, sans multi-arêtes ni boucles, avec sommets de type String.
+ *  - Graphe simple, non orienté, sans multi-arêtes ni boucles, avec sommets de type Vertex.
  *  - Représentation par listes d'adjacence: Map<Sommet, Set<Voisins>>.
  *  - Invariants:
  *      * Si b ∈ adj[a], alors a ∈ adj[b] (symétrie). Les arêtes sont non orientées.
@@ -14,35 +14,35 @@ import java.util.*;
  */
 public class SimpleGraph {
     // Adjacence: chaque sommet pointe vers un set de voisins (pas de doublons, accès O(1) moyen)
-    private final Map<String, Set<String>> adj;
-    // Nombre d'arêtes (chaque arête non orientée compte pour 1)
-    private int edgeCount;
+    private Map<Vertex, Set<Vertex>> adj = new HashMap<>();
 
+    // Noeuds
+    private ArrayList<Vertex> vertices = new ArrayList<>();
+    private Map<String, Vertex> nameToVertex = new HashMap<>();
+
+    // Nombre d'arêtes (chaque arête non orientée compte pour 1)
+    private int edgeCount = 0;
 
     /**
      * Nouveau graph 
      */
-    public SimpleGraph() {
-        this.adj = new HashMap<>();
-        this.edgeCount = 0;
-    }
+    public SimpleGraph() { }
 
     /**
      * Deepcopy du graph g
      */
     public SimpleGraph(SimpleGraph g) {
-        this.adj = new HashMap<>();
+        this.vertices = new ArrayList<>(g.vertices);
+        this.nameToVertex = new HashMap<>(g.nameToVertex);
         g.adj.forEach((k, v) -> this.adj.put(k, new HashSet<>(v)));
         this.edgeCount = g.edgeCount;
     }
-
-
 
     /**
      * Ensemble non modifiable des sommets présents dans le graphe.
      * Utiliser addVertex/addEdge pour le modifier.
      */
-    public Set<String> vertices() { return Collections.unmodifiableSet(adj.keySet()); }
+    public Collection<Vertex> vertices() { return Collections.unmodifiableCollection(vertices); }
 
     /**
      * Nombre de sommets.
@@ -57,13 +57,22 @@ public class SimpleGraph {
     /**
      * Ajoute un sommet s'il n'existe pas déjà.
      */
-    public void addVertex(String v) { adj.putIfAbsent(v, new HashSet<>()); }
+    public Vertex addVertex(String name) { 
+        if (this.nameToVertex.containsKey(name)) return this.nameToVertex.get(name);
+        
+        Vertex v = new Vertex(this.vertices.size(), name);
+        this.vertices.add(v);
+        this.nameToVertex.put(name, v);
+        adj.put(v, new HashSet<>());
+
+        return v;
+    }
 
     /**
      * Teste la présence de l'arête {a,b}.
      */
-    public boolean containsEdge(String a, String b) {
-        Set<String> s = adj.get(a);
+    public boolean containsEdge(Vertex a, Vertex b) {
+        Set<Vertex> s = adj.get(a);
         return s != null && s.contains(b);
     }
 
@@ -75,10 +84,13 @@ public class SimpleGraph {
      */
     public void addEdge(String a, String b) {
         if (a.equals(b)) return; // pas de boucle
-        addVertex(a); addVertex(b);
-        if (!adj.get(a).contains(b)) {
-            adj.get(a).add(b);
-            adj.get(b).add(a);
+        addEdge(addVertex(a), addVertex(b));
+    }
+
+    public void addEdge(Vertex v, Vertex w) {
+        if (!containsEdge(v, w)) {
+            adj.get(v).add(w);
+            adj.get(w).add(v);
             edgeCount++;
         }
     }
@@ -87,10 +99,10 @@ public class SimpleGraph {
      * Supprime l'arête {a,b} si elle existe, en maintenant la symétrie
      * et en décrémentant edgeCount.
      */
-    public void removeEdge(String a, String b) {
-        if (containsEdge(a,b)) {
-            adj.get(a).remove(b);
-            adj.get(b).remove(a);
+    public void removeEdge(Vertex v, Vertex w) {
+        if (containsEdge(v,w)) {
+            adj.get(v).remove(w);
+            adj.get(w).remove(v);
             edgeCount--;
         }
     }
@@ -98,14 +110,14 @@ public class SimpleGraph {
     /**
      * Retourne une vue non modifiable de l'ensemble des voisins de v (ensemble vide si v absent).
      */
-    public Set<String> neighbors(String v) { 
-        return Collections.unmodifiableSet(adj.getOrDefault(v, Collections.emptySet())); 
+    public Collection<Vertex> neighbors(Vertex v) { 
+        return Collections.unmodifiableCollection(this.adj.get(v)); 
     }
 
     /**
      * Retourne le degree du noeud v
      */
-    public int degree(String v) { return neighbors(v).size(); }
+    public int degree(Vertex v) { return neighbors(v).size(); }
     
     /**
      * Liste les arêtes uniques du graphe sous forme d'objets Edge.
@@ -114,8 +126,8 @@ public class SimpleGraph {
     public List<Edge> edges() {
         List<Edge> list = new ArrayList<>();
 
-        for (String u : adj.keySet()) {
-            for (String v : adj.get(u)) {
+        for (Vertex u : adj.keySet()) {
+            for (Vertex v : adj.get(u)) {
                 if (u.compareTo(v) < 0) {
                     list.add(new Edge(u,v));
                 }
@@ -131,8 +143,8 @@ public class SimpleGraph {
      */
     public int getVertexDiameter() {
         int diameter = 0;
-        for (String source : vertices()) {
-            Map<String, Integer> distances = getDistances(source);
+        for (Vertex source : vertices()) {
+            Map<Vertex, Integer> distances = getDistances(source);
             for (int d : distances.values()) {
                 if (d > diameter) diameter = d;
             }
@@ -140,44 +152,23 @@ public class SimpleGraph {
         return diameter;
     }
 
-    private static final int VD_SAMPLES = 10;
-    /**
-     * Approximate the vertex diameter through the mean of repeated samples 
-     * Each sample is the length of the concatenation of the two longest shortest paths from a random vertex
-     */
-    public int getVertexDiameterApproximation(int n_samples) {
 
-        int VD = 0;
-        for (int i = 0; i < n_samples; i++) {
-            String source = randomNode();
-            ArrayList<Integer> distanceValues = new ArrayList<>(getDistances(source).values());
-            distanceValues.sort((x1, x2) -> - Integer.compare(x1,x2));
-            
-            // Sometimes the random node is a leaf, so there is only one possible path
-            int diameterSample = distanceValues.size() < 2 ? distanceValues.get(0) : distanceValues.get(0) + distanceValues.get(1);
-            VD += diameterSample;
-        }
-        // Ceil out the integer division (for example 0.555 -> 1)
-        return (VD+n_samples) / n_samples;
-    }
-    public int getVertexDiameterApproximation() { return getVertexDiameterApproximation(VD_SAMPLES); }
-
-    public String randomNode() {
+    public Vertex randomNode() {
         Random rng = new Random();
-        return (String) this.adj.keySet().toArray()[rng.nextInt(vertexCount())];
+        return vertices.get(rng.nextInt(vertexCount()));
     }
 
     /**
      * Calculates shoretest distances in an unweighted graph
      */
-    private Map<String, Integer> getDistances(String source) {
-        Map<String, Integer> distances = new HashMap<>();
-        Queue<String> queue = new ArrayDeque<>();
+    public Map<Vertex, Integer> getDistances(Vertex source) {
+        Map<Vertex, Integer> distances = new HashMap<>();
+        Queue<Vertex> queue = new ArrayDeque<>();
         distances.put(source, 0);
         queue.add(source);
         while (!queue.isEmpty()) {
-            String v = queue.remove();
-            for (String w : neighbors(v)) {
+            Vertex v = queue.remove();
+            for (Vertex w : neighbors(v)) {
                 if (!distances.containsKey(w)) {
                     distances.put(w, distances.get(v) + 1);
                     queue.add(w);
@@ -191,27 +182,27 @@ public class SimpleGraph {
     /**
      * Returns a map that assigns a connected component id to each node
      */
-    public Map<String, Integer> getConnectedComponents() {
+    public Map<Vertex, Integer> getConnectedComponents() {
 
         // Assigns an connected component id to each node, 
-        Map<String, Integer> cc_partition = new HashMap<>();
+        Map<Vertex, Integer> cc_partition = new HashMap<>();
 
         int component_id = 0; 
-        for (String n : vertices()) {
+        for (Vertex u : vertices()) {
             // Skip nodes already visited
-            if (cc_partition.containsKey(n))
+            if (cc_partition.containsKey(u))
                 continue;
 
             // BFS: assign current component_id to all reachable nodes from n
-            Queue<String> queue = new ArrayDeque<>();
-            queue.add(n);
-            cc_partition.put(n, component_id);
+            Queue<Vertex> queue = new ArrayDeque<>();
+            queue.add(u);
+            cc_partition.put(u, component_id);
             while (!queue.isEmpty()) {
-                String u = queue.remove();
-                for (String v : neighbors(u)) {
-                    if (!cc_partition.containsKey(v)) {
-                        cc_partition.put(v, component_id);
-                        queue.add(v);
+                Vertex v = queue.remove();
+                for (Vertex w : neighbors(v)) {
+                    if (!cc_partition.containsKey(w)) {
+                        cc_partition.put(w, component_id);
+                        queue.add(w);
                     }
                 }
             }
@@ -221,5 +212,15 @@ public class SimpleGraph {
         }
 
         return cc_partition;
+    }
+
+
+    @Override
+    public String toString() {
+        String to_String = "Graph: ";
+        for (Vertex v : vertices()) {
+            to_String = to_String + "\n" + v;
+        }
+        return to_String;
     }
 }

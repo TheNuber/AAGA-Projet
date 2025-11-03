@@ -5,6 +5,7 @@ import java.util.*;
 public class BetweennessSamplingAlgo {
 
     private int vertexDiameter = -1;
+    private int vdSamples = 10;
     private double epsilon = 0.2; // accuracy parameter : smaller = more accurate
     private double delta = 0.3; // probability parameter : smaller = more reliable but increased sample size
     private double c = 1.0; // constant (can be adjusted)
@@ -12,6 +13,7 @@ public class BetweennessSamplingAlgo {
     public BetweennessSamplingAlgo() { }
 
     public void setVertexDiameter(int vertexDiameter) { this.vertexDiameter = vertexDiameter; }
+    public void setVDSamples(int vdSamples) { this.vdSamples = vdSamples; }
     public void setEpsilon(double epsilon) { this.epsilon = epsilon; }
     public void setDelta(double delta) { this.delta = delta; }
     public void setC(double c) { this.c = c; }
@@ -43,19 +45,38 @@ public class BetweennessSamplingAlgo {
         return (int) Math.ceil(r);
     }
 
+
+    /**
+     * Approximate the vertex diameter through the mean of repeated samples 
+     * Each sample is the length of the concatenation of the two longest shortest paths from a random vertex
+     */
+    public int getVertexDiameterApproximation(SimpleGraph g) {
+        int VD = 0;
+        for (int i = 0; i < vdSamples; i++) {
+            Vertex source = g.randomNode();
+            ArrayList<Integer> distanceValues = new ArrayList<>(g.getDistances(source).values());
+            distanceValues.sort((x1, x2) -> - Integer.compare(x1,x2));
+            
+            // Sometimes the random node is a leaf, so there is only one possible path
+            int diameterSample = distanceValues.size() < 2 ? distanceValues.get(0) : distanceValues.get(0) + distanceValues.get(1);
+            VD += diameterSample;
+        }
+        // Ceil out the integer division (for example 0.555 -> 1)
+        return (VD+vdSamples) / vdSamples;
+    }
+
+
     public void run(SimpleGraph g) {
 
+        // Calculate vertex diameter if not specified
         if (vertexDiameter == -1) {
-            vertexDiameter = g.getVertexDiameterApproximation();
+            vertexDiameter = getVertexDiameterApproximation(g);
         }
         System.out.println("Vertex diameter VD(G): " + vertexDiameter);
 
-        // 0. Calculate sample size r
+        // Calculate sample size r
         int r = computeSampleSize();
         System.out.println("Sample size r: " + r);
-
-        Set<String> vertices = g.vertices();
-        Random rnd = new Random();
 
         Map<Edge, Double> bc = new HashMap<>(); // betweenness par arête
 
@@ -63,13 +84,11 @@ public class BetweennessSamplingAlgo {
         for (int k = 0; k < r; k++) {
 
             // 1. Select random distinct nodes
-            int i = rnd.nextInt(g.vertexCount());
-            int j = rnd.nextInt(g.vertexCount());
-            while (i == j) {
-                j = rnd.nextInt(g.vertexCount());
+            Vertex u = (Vertex) g.randomNode();
+            Vertex v = (Vertex) g.randomNode();
+            while (u == v) {
+                v = g.randomNode();
             }
-            String u = (String) vertices.toArray()[i];
-            String v = (String) vertices.toArray()[j];
 
             // 2. Compute a random shortest path between them
             List<Edge> randomShortestPath = computeRandomShortestPath(g, u, v);
@@ -83,22 +102,22 @@ public class BetweennessSamplingAlgo {
 
     }
 
-    public static List<Edge> computeRandomShortestPath(SimpleGraph g, String source, String target) {
+    public List<Edge> computeRandomShortestPath(SimpleGraph g, Vertex source, Vertex target) {
 
         // First part: compute values for predecessors and number of shortest paths from source
         // Very similar to first part of Girvan Newman algorithm
         // Complexity: O(V+E)
 
-        Map<String, List<String>> preds = new HashMap<>();
-        Map<String, Integer> distances = new HashMap<>();
-        Map<String, Integer> sigma = new HashMap<>();
+        Map<Vertex, List<Vertex>> preds = new HashMap<>();
+        Map<Vertex, Integer> distances = new HashMap<>();
+        Map<Vertex, Integer> sigma = new HashMap<>();
 
         sigma.put(source, 1);
-        Queue<String> queue = new ArrayDeque<>();
+        Queue<Vertex> queue = new ArrayDeque<>();
         queue.add(source);
         while(!queue.isEmpty()) {
-            String v = queue.remove();
-            for (String w : g.neighbors(v)) {
+            Vertex v = queue.remove();
+            for (Vertex w : g.neighbors(v)) {
                 // Calculate distance
                 if (!distances.containsKey(w)) {
                     distances.put(w, distances.get(v) + 1);
@@ -120,7 +139,7 @@ public class BetweennessSamplingAlgo {
         Random rng = new Random();
 
         List<Edge> randomShortestPath = new ArrayList<>();
-        String v = target;
+        Vertex v = target;
         while(!v.equals(source)) {
             /**
              * Select a predecessor randomly
@@ -133,8 +152,8 @@ public class BetweennessSamplingAlgo {
             int winner = rng.nextInt(sigma.get(v));
             int tickets = 0;
 
-            Iterator<String> it = preds.get(v).iterator();
-            String u = null;
+            Iterator<Vertex> it = preds.get(v).iterator();
+            Vertex u = null;
             do {
                 u = it.next();
                 tickets += sigma.get(u);

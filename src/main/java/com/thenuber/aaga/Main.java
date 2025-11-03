@@ -36,12 +36,13 @@ public class Main {
 
         // Calculate betweenness
 
-        Map<String, Integer> partition = null;
+        Map<Vertex, Integer> partition = null;
         double modularity = -1.0;
 
         if (algorithm.equals("gn")) {
             // Girvan-Newmann algorithm
-            List<Map<String, Integer>> parts = GirvanNewman.run(g);
+            List<Map<Vertex, Integer>> parts = GirvanNewman.run(g);
+
             if (!parts.isEmpty()) {
                 partition = parts.get(parts.size() - 1);
                 modularity = Modularity.compute(g, partition);
@@ -82,16 +83,14 @@ public class Main {
         // Write output
 
         try (FileWriter fw = new FileWriter(partitionFile)) {
-            for (Map.Entry<String, Integer> e : partition.entrySet())
+            for (Map.Entry<Vertex, Integer> e : partition.entrySet())
                 fw.write(e.getKey() + "\t" + e.getValue() + "\n");
         }
         try (FileWriter fw = new FileWriter(metricsFile)) {
             fw.write("modularity\t" + modularity + "\n");
         }
 
-
         System.out.println("Wrote partition and metrics to " + outputFilePath + "_* files");
-
     }
 
     private static Map<String, String> parseArgs(String[] args) {

@@ -11,10 +11,17 @@ public class ModularityTest {
     @Test
     public void testSimpleTwoCommunities() {
         SimpleGraph g = new SimpleGraph();
-        g.addEdge("a","b");
-        g.addEdge("c","d");
-        Map<String,Integer> part = new HashMap<>();
-        part.put("a", 0); part.put("b", 0); part.put("c",1); part.put("d",1);
+
+        Vertex v1 = g.addVertex("a");
+        Vertex v2 = g.addVertex("b");
+        Vertex v3 = g.addVertex("c");
+        Vertex v4 = g.addVertex("d");
+
+        g.addEdge(v1, v2);
+        g.addEdge(v3, v4);
+
+        Map<Vertex,Integer> part = g.getConnectedComponents();
+
         double q = Modularity.compute(g, part);
         assertTrue(q >= 0.0);
     }

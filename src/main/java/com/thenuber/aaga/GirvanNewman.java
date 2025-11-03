@@ -29,13 +29,13 @@ public class GirvanNewman {
      * - Sortie: liste ordonnée des partitions (du graphe initial jusqu'au graphe
      * sans arêtes).
      */
-    public static List<Map<String, Integer>> run(SimpleGraph input) {
+    public static List<Map<Vertex, Integer>> run(SimpleGraph input) {
 
         // Deepcopy of input graph
         SimpleGraph g = new SimpleGraph(input);
 
         // List of all connected components partitions obtained with the algorithm
-        List<Map<String, Integer>> partitions = new ArrayList<>();
+        List<Map<Vertex, Integer>> partitions = new ArrayList<>();
 
         while (g.edgeCount() > 0) {
             // 1. Calculate edge betweenness for all edges
@@ -49,7 +49,7 @@ public class GirvanNewman {
                     toRemove.add(e.getKey());
                 }
             }
-            
+
             // 3. Remove all those edges
             for (Edge e : toRemove) {
                 g.removeEdge(e.u, e.v);
@@ -81,13 +81,13 @@ public class GirvanNewman {
         for (Edge e : g.edges())
             edge_betweenness.put(e, 0.0);
 
-        for (String s : g.vertices()) {
+        for (Vertex s : g.vertices()) {
             // Phase BFS (plus courts chemins depuis s)
-            Deque<String> stack = new ArrayDeque<>(); // ordre de visite pour l'accumulation
-            Map<String, List<String>> pred = new HashMap<>(); // prédécesseurs de w sur les plus courts chemins
-            Map<String, Integer> distances = new HashMap<>(); // distances depuis s
-            Map<String, Integer> sigma = new HashMap<>(); // nb. de plus courts chemins de s vers v
-            for (String v : g.vertices()) {
+            Deque<Vertex> stack = new ArrayDeque<>(); // ordre de visite pour l'accumulation
+            Map<Vertex, List<Vertex>> pred = new HashMap<>(); // prédécesseurs de w sur les plus courts chemins
+            Map<Vertex, Integer> distances = new HashMap<>(); // distances depuis s
+            Map<Vertex, Integer> sigma = new HashMap<>(); // nb. de plus courts chemins de s vers v
+            for (Vertex v : g.vertices()) {
                 pred.put(v, new ArrayList<>());
                 distances.put(v, -1);
                 sigma.put(v, 0);
@@ -95,12 +95,12 @@ public class GirvanNewman {
 
             distances.put(s, 0);
             sigma.put(s, 1);
-            Queue<String> queue = new ArrayDeque<>();
+            Queue<Vertex> queue = new ArrayDeque<>();
             queue.add(s);
             while (!queue.isEmpty()) {
-                String v = queue.remove();
+                Vertex v = queue.remove();
                 stack.push(v);
-                for (String w : g.neighbors(v)) {
+                for (Vertex w : g.neighbors(v)) {
                     // Découverte de w
                     if (distances.get(w) < 0) {
                         distances.put(w, distances.get(v) + 1);
@@ -115,13 +115,13 @@ public class GirvanNewman {
             }
 
             // Phase d'accumulation: contributions en remontant depuis les plus éloignés
-            Map<String, Double> delta = new HashMap<>();
-            for (String v : g.vertices())
+            Map<Vertex, Double> delta = new HashMap<>();
+            for (Vertex v : g.vertices())
                 delta.put(v, 0.0);
 
             while (!stack.isEmpty()) {
-                String w = stack.pop();
-                for (String v : pred.get(w)) {
+                Vertex w = stack.pop();
+                for (Vertex v : pred.get(w)) {
                     if (sigma.get(w) != 0) {
                         double sv_sw = (double) sigma.get(v) / (double) sigma.get(w);
                         double dw = delta.get(w);

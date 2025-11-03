@@ -1,100 +1,100 @@
-B20	0
-B21	1
-B22	2
-B23	3
-B24	4
-B25	5
-B26	6
-B27	7
-B28	8
-B29	9
-A1	10
-A2	11
-A3	12
-A4	13
-A5	14
-A6	15
-A7	16
-A8	17
-A9	18
-B30	19
-A10	20
-B31	21
-A11	22
-B32	23
-A12	24
-B33	25
-A13	26
-B34	27
-A14	28
-B35	29
-A15	30
-B36	31
-A16	32
-B37	33
-A17	34
-B38	35
-A18	36
-B39	37
-A19	38
-B1	39
-B2	40
-B3	41
-B4	42
-B5	43
-B6	44
-B7	45
-B8	46
-B9	47
-B40	48
-A20	49
-B41	50
-A21	51
-B42	52
-A22	53
-B43	54
-A23	55
-B44	56
-A24	57
-B45	58
-A25	59
-B46	60
-A26	61
-B47	62
-A27	63
-B48	64
-A28	65
-B49	66
-A29	67
-B50	68
-A30	69
-A31	70
-A32	71
-A33	72
-A34	73
-A35	74
-A36	75
-A37	76
-A38	77
-A39	78
-A40	79
-A41	80
-A42	81
-A43	82
-A44	83
-A45	84
-A46	85
-A47	86
-A48	87
-A49	88
-A50	89
-B10	90
-B11	91
-B12	92
-B13	93
-B14	94
-B15	95
-B16	96
-B17	97
-B18	98
-B19	99
+Vertex {id=30, name=A31}	30
+Vertex {id=38, name=A39}	38
+Vertex {id=89, name=B40}	89
+Vertex {id=97, name=B48}	97
+Vertex {id=59, name=B10}	59
+Vertex {id=67, name=B18}	67
+Vertex {id=23, name=A24}	23
+Vertex {id=0, name=A1}	0
+Vertex {id=8, name=A9}	8
+Vertex {id=82, name=B33}	82
+Vertex {id=16, name=A17}	16
+Vertex {id=46, name=A47}	46
+Vertex {id=75, name=B26}	75
+Vertex {id=57, name=B8}	57
+Vertex {id=31, name=A32}	31
+Vertex {id=90, name=B41}	90
+Vertex {id=98, name=B49}	98
+Vertex {id=60, name=B11}	60
+Vertex {id=68, name=B19}	68
+Vertex {id=24, name=A25}	24
+Vertex {id=1, name=A2}	1
+Vertex {id=83, name=B34}	83
+Vertex {id=39, name=A40}	39
+Vertex {id=9, name=A10}	9
+Vertex {id=17, name=A18}	17
+Vertex {id=47, name=A48}	47
+Vertex {id=76, name=B27}	76
+Vertex {id=50, name=B1}	50
+Vertex {id=58, name=B9}	58
+Vertex {id=32, name=A33}	32
+Vertex {id=91, name=B42}	91
+Vertex {id=61, name=B12}	61
+Vertex {id=25, name=A26}	25
+Vertex {id=2, name=A3}	2
+Vertex {id=84, name=B35}	84
+Vertex {id=40, name=A41}	40
+Vertex {id=10, name=A11}	10
+Vertex {id=18, name=A19}	18
+Vertex {id=48, name=A49}	48
+Vertex {id=69, name=B20}	69
+Vertex {id=77, name=B28}	77
+Vertex {id=99, name=B50}	99
+Vertex {id=51, name=B2}	51
+Vertex {id=33, name=A34}	33
+Vertex {id=92, name=B43}	92
+Vertex {id=62, name=B13}	62
+Vertex {id=26, name=A27}	26
+Vertex {id=3, name=A4}	3
+Vertex {id=85, name=B36}	85
+Vertex {id=41, name=A42}	41
+Vertex {id=11, name=A12}	11
+Vertex {id=70, name=B21}	70
+Vertex {id=78, name=B29}	78
+Vertex {id=52, name=B3}	52
+Vertex {id=34, name=A35}	34
+Vertex {id=93, name=B44}	93
+Vertex {id=63, name=B14}	63
+Vertex {id=49, name=A50}	49
+Vertex {id=19, name=A20}	19
+Vertex {id=27, name=A28}	27
+Vertex {id=4, name=A5}	4
+Vertex {id=86, name=B37}	86
+Vertex {id=42, name=A43}	42
+Vertex {id=12, name=A13}	12
+Vertex {id=71, name=B22}	71
+Vertex {id=53, name=B4}	53
+Vertex {id=35, name=A36}	35
+Vertex {id=94, name=B45}	94
+Vertex {id=64, name=B15}	64
+Vertex {id=20, name=A21}	20
+Vertex {id=28, name=A29}	28
+Vertex {id=5, name=A6}	5
+Vertex {id=79, name=B30}	79
+Vertex {id=87, name=B38}	87
+Vertex {id=43, name=A44}	43
+Vertex {id=13, name=A14}	13
+Vertex {id=72, name=B23}	72
+Vertex {id=54, name=B5}	54
+Vertex {id=36, name=A37}	36
+Vertex {id=95, name=B46}	95
+Vertex {id=65, name=B16}	65
+Vertex {id=21, name=A22}	21
+Vertex {id=6, name=A7}	6
+Vertex {id=80, name=B31}	80
+Vertex {id=88, name=B39}	88
+Vertex {id=44, name=A45}	44
+Vertex {id=14, name=A15}	14
+Vertex {id=73, name=B24}	73
+Vertex {id=55, name=B6}	55
+Vertex {id=29, name=A30}	29
+Vertex {id=37, name=A38}	37
+Vertex {id=96, name=B47}	96
+Vertex {id=66, name=B17}	66
+Vertex {id=22, name=A23}	22
+Vertex {id=7, name=A8}	7
+Vertex {id=81, name=B32}	81
+Vertex {id=45, name=A46}	45
+Vertex {id=15, name=A16}	15
+Vertex {id=74, name=B25}	74
+Vertex {id=56, name=B7}	56

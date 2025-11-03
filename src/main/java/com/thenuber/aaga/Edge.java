@@ -1,12 +1,18 @@
 package com.thenuber.aaga;
 
 public class Edge {
-    public final String u;
-    public final String v;
+    public final Vertex u;
+    public final Vertex v;
 
-    public Edge(String u, String v) {
-        if (u.compareTo(v) <= 0) { this.u = u; this.v = v; }
-        else { this.u = v; this.v = u; }
+    public Edge(Vertex u, Vertex v) {
+        if (u.compareTo(v) <= 0) { 
+            this.u = u; 
+            this.v = v; 
+        }
+        else { 
+            this.u = v; 
+            this.v = u;
+        }
     }
 
     @Override
