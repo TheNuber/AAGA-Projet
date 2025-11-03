@@ -17,7 +17,7 @@ import java.util.*;
  * - componentPartition(g): calcule la partition (composantes connexes)
  * courante.
  */
-public class GirvanNewman {
+public class GirvanNewman implements GraphAlgorithm {
     /**
      * - Entrée: un graphe SimpleGraph (copié en interne pour ne pas modifier
      * l'original).
@@ -29,7 +29,7 @@ public class GirvanNewman {
      * - Sortie: liste ordonnée des partitions (du graphe initial jusqu'au graphe
      * sans arêtes).
      */
-    public static List<Map<Vertex, Integer>> run(SimpleGraph input) {
+    public List<Map<Vertex, Integer>> run(SimpleGraph input) {
 
         // Deepcopy of input graph
         SimpleGraph g = new SimpleGraph(input);
@@ -76,7 +76,7 @@ public class GirvanNewman {
      * - Complexité: O(VE) par passe (toutes sources s).
      * - Pour graphe non orienté, division finale par 2.
      */
-    public static Map<Edge, Double> edgeBetweenness(SimpleGraph g) {
+    public Map<Edge, Double> edgeBetweenness(SimpleGraph g) {
         Map<Edge, Double> edge_betweenness = new HashMap<>(); // betweenness par arête
         for (Edge e : g.edges()) {
             edge_betweenness.put(e, 0.0);

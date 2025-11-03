@@ -30,7 +30,7 @@ public class GirvanNewmanRevised extends GirvanNewman {
      * - Sortie: liste ordonnée des partitions (du graphe initial jusqu'au graphe
      * sans arêtes).
      */
-    public static List<Map<Vertex, Integer>> run(SimpleGraph input) {
+    public List<Map<Vertex, Integer>> run(SimpleGraph input) {
 
         // Deepcopy of input graph
         SimpleGraph g = new SimpleGraph(input);
@@ -108,7 +108,7 @@ public class GirvanNewmanRevised extends GirvanNewman {
     }
 
     
-    public static Map<Edge, Double> recalculateEdgeBetweenness(SimpleGraph g, Map<Edge,Double> edge_betweenness, Collection<Vertex> affectedVertices) {
+    public Map<Edge, Double> recalculateEdgeBetweenness(SimpleGraph g, Map<Edge,Double> edge_betweenness, Collection<Vertex> affectedVertices) {
 
         
         for (Vertex s : affectedVertices) {

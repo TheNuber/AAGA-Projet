@@ -28,6 +28,16 @@ public class Main {
         String outputFilePath = opts.getOrDefault("o", "out");
         String algorithm = opts.getOrDefault("a", "gn");
 
+        GraphAlgorithm graphAlgorithm = null;
+
+        if (algorithm.equals("gn")) {
+            graphAlgorithm = new GirvanNewman();
+        } else if (algorithm.equals("bsa")) {
+            graphAlgorithm = new BetweennessSamplingAlgo();
+        } else {
+            System.out.println("Unknown algorithm: " + algorithm);
+            return;
+        }
 
         // Read input graph
 
@@ -39,28 +49,11 @@ public class Main {
         Map<Vertex, Integer> partition = null;
         double modularity = -1.0;
 
-        if (algorithm.equals("gn")) {
-            // Girvan-Newmann algorithm
-            List<Map<Vertex, Integer>> parts = GirvanNewman.run(g);
-
-            if (!parts.isEmpty()) {
-                partition = parts.get(parts.size() - 1);
-                modularity = Modularity.compute(g, partition);
-            } else {
-                System.out.println("No partitions produced.");
-            }
-        } else if (algorithm.equals("bsa")) {
-            // Betweenness sampling algorithm
-            // TODO
-
-            // Example of running Betweenness Sampling Algorithm
-            BetweennessSamplingAlgo bsa = new BetweennessSamplingAlgo();
-            bsa.run(g);
-
-        } else {
-            System.out.println("Unknown algorithm: " + algorithm);
+        List<Map<Vertex, Integer>> parts = graphAlgorithm.run(g);
+        if (!parts.isEmpty()) {
+            partition = parts.get(parts.size() - 1);
+            modularity = Modularity.compute(g, partition);
         }
-
 
         // Write results
 

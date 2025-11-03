@@ -2,7 +2,7 @@ package com.thenuber.aaga;
 
 import java.util.*;
 
-public class BetweennessSamplingAlgo {
+public class BetweennessSamplingAlgo implements GraphAlgorithm {
 
     private int vertexDiameter = -1;
     private int vdSamples = 10;
@@ -17,6 +17,79 @@ public class BetweennessSamplingAlgo {
     public void setEpsilon(double epsilon) { this.epsilon = epsilon; }
     public void setDelta(double delta) { this.delta = delta; }
     public void setC(double c) { this.c = c; }
+
+
+    public List<Map<Vertex, Integer>> run(SimpleGraph input) {
+
+        // Deepcopy of input graph
+        SimpleGraph g = new SimpleGraph(input);
+
+        // List of all connected components partitions obtained with the algorithm
+        List<Map<Vertex, Integer>> partitions = new ArrayList<>();
+
+        while (g.edgeCount() > 0) {
+            // 1. Calculate edge betweenness for all edgess
+            Map<Edge, Double> eb = sampledEdgeBetweenness(g);
+
+            // 2. Get all edges with maximum edge betweenness
+            double max = eb.values().stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
+            List<Edge> toRemove = new ArrayList<>();
+            for (Map.Entry<Edge, Double> e : eb.entrySet()) {
+                if (Double.compare(e.getValue(), max) == 0) {
+                    toRemove.add(e.getKey());
+                }
+            }
+
+            // 3. Remove all those edges
+            for (Edge e : toRemove) {
+                g.removeEdge(e.u, e.v);
+            }
+
+            // 4. Calculate and save the current connected components partition
+            partitions.add(g.getConnectedComponents());
+        }
+        return partitions;
+    }
+
+
+    
+    public Map<Edge,Double> sampledEdgeBetweenness(SimpleGraph input) {
+
+        // Calculate vertex diameter if not specified
+        if (vertexDiameter == -1) {
+            vertexDiameter = getVertexDiameterApproximation(input);
+        }
+        System.out.println("Vertex diameter VD(G): " + vertexDiameter);
+
+        // Calculate sample size r
+        int r = computeSampleSize();
+        System.out.println("Sample size r: " + r);
+
+        Map<Edge, Double> bc = new HashMap<>(); // betweenness par arête
+
+        // Repeating r times
+        for (int k = 0; k < r; k++) {
+
+            // 1. Select random distinct nodes
+            Vertex u = (Vertex) input.randomNode();
+            Vertex v = (Vertex) input.randomNode();
+            while (u == v) {
+                v = input.randomNode();
+            }
+
+            // 2. Compute a random shortest path between them
+            List<Edge> randomShortestPath = computeRandomShortestPath(input, u, v);
+
+            // 3. For every edge in the random shortest path, increase its approximate betweenness centrality
+            for (Edge e : randomShortestPath) {
+                double value = bc.getOrDefault(e, 0.0);
+                bc.put(e, value+1/r);
+            }
+        }
+
+        return bc;
+
+    }
 
 
 
@@ -63,43 +136,6 @@ public class BetweennessSamplingAlgo {
         }
         // Ceil out the integer division (for example 0.555 -> 1)
         return (VD+vdSamples) / vdSamples;
-    }
-
-
-    public void run(SimpleGraph g) {
-
-        // Calculate vertex diameter if not specified
-        if (vertexDiameter == -1) {
-            vertexDiameter = getVertexDiameterApproximation(g);
-        }
-        System.out.println("Vertex diameter VD(G): " + vertexDiameter);
-
-        // Calculate sample size r
-        int r = computeSampleSize();
-        System.out.println("Sample size r: " + r);
-
-        Map<Edge, Double> bc = new HashMap<>(); // betweenness par arête
-
-        // Repeating r times
-        for (int k = 0; k < r; k++) {
-
-            // 1. Select random distinct nodes
-            Vertex u = (Vertex) g.randomNode();
-            Vertex v = (Vertex) g.randomNode();
-            while (u == v) {
-                v = g.randomNode();
-            }
-
-            // 2. Compute a random shortest path between them
-            List<Edge> randomShortestPath = computeRandomShortestPath(g, u, v);
-
-            // 3. For every edge in the random shortest path, increase its approximate betweenness centrality
-            for (Edge e : randomShortestPath) {
-                double value = bc.getOrDefault(e, 0.0);
-                bc.put(e, value+1/r);
-            }
-        }
-
     }
 
     public List<Edge> computeRandomShortestPath(SimpleGraph g, Vertex source, Vertex target) {
