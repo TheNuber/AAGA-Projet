@@ -126,8 +126,8 @@ public class SimpleGraph {
     public List<Edge> edges() {
         List<Edge> list = new ArrayList<>();
 
-        for (Vertex u : adj.keySet()) {
-            for (Vertex v : adj.get(u)) {
+        for (Vertex u : vertices()) {
+            for (Vertex v : neighbors(u)) {
                 if (u.compareTo(v) < 0) {
                     list.add(new Edge(u,v));
                 }

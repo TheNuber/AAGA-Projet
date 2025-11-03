@@ -1,6 +1,7 @@
 package com.thenuber.aaga;
 
 import java.util.*;
+import java.util.stream.Collector;
 
 /**
  * GirvanNewman
@@ -17,7 +18,7 @@ import java.util.*;
  * - componentPartition(g): calcule la partition (composantes connexes)
  * courante.
  */
-public class GirvanNewman {
+public class GirvanNewmanRevised extends GirvanNewman {
     /**
      * - Entrée: un graphe SimpleGraph (copié en interne pour ne pas modifier
      * l'original).
@@ -37,13 +38,55 @@ public class GirvanNewman {
         // List of all connected components partitions obtained with the algorithm
         List<Map<Vertex, Integer>> partitions = new ArrayList<>();
 
+        // First iteration: similar to the one in standard Girvan-Newmann
+
+        // 1. Calculate edge betweenness for all edges
+        Map<Edge, Double> eb = edgeBetweenness(g);
+
+        // 2. Get all edges with maximum edge betweenness
+        double max = eb.values().stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
+        List<Edge> toRemove = new ArrayList<>();
+        for (Map.Entry<Edge, Double> e : eb.entrySet()) {
+            if (Double.compare(e.getValue(), max) == 0) {
+                toRemove.add(e.getKey());
+            }
+        }
+
+        // 3. Remove all those edges
+        for (Edge e : toRemove) {
+            g.removeEdge(e.u, e.v);
+        } 
+        
+        // 4. Calculate and save the current connected components partition
+        Map<Vertex,Integer> nextCCPartition = g.getConnectedComponents();
+        partitions.add(nextCCPartition);
+
+        // Next iterations: recalculate betweenness only in the affected connected
+        // components
         while (g.edgeCount() > 0) {
-            // 1. Calculate edge betweenness for all edges
-            Map<Edge, Double> eb = edgeBetweenness(g);
+
+            // Obtain all the vertices whose shortest paths may have been affected
+            // That is, the vertices in the connected components of the removed edges
+
+            Set<Integer> affectedComponents = new HashSet<>();
+            for (Edge e : toRemove) {
+                affectedComponents.add(nextCCPartition.get(e.u));
+                affectedComponents.add(nextCCPartition.get(e.v));
+            }
+
+            List<Vertex> affectedVertices = new ArrayList<>(); 
+            for (Vertex v : g.vertices()) {
+                if (affectedComponents.contains(nextCCPartition.get(v))) {
+                    affectedVertices.add(v);
+                }
+            }
+
+            // 1. Recalculate edge betweenness
+            eb = recalculateEdgeBetweenness(g, eb, affectedVertices);
 
             // 2. Get all edges with maximum edge betweenness
-            double max = eb.values().stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
-            List<Edge> toRemove = new ArrayList<>();
+            max = eb.values().stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
+            toRemove = new ArrayList<>();
             for (Map.Entry<Edge, Double> e : eb.entrySet()) {
                 if (Double.compare(e.getValue(), max) == 0) {
                     toRemove.add(e.getKey());
@@ -53,42 +96,29 @@ public class GirvanNewman {
             // 3. Remove all those edges
             for (Edge e : toRemove) {
                 g.removeEdge(e.u, e.v);
-            }
-
+            } 
+            
             // 4. Calculate and save the current connected components partition
-            partitions.add(g.getConnectedComponents());
+            nextCCPartition = g.getConnectedComponents();
+            partitions.add(nextCCPartition);
         }
+
         return partitions;
+
     }
 
-    /**
-     * edgeBetweenness
-     * - Implémentation de Brandes (graphe non pondéré) adaptée aux ARÊTES.
-     * - Principe:
-     * * Pour chaque source s, on fait un BFS pour obtenir dist[], sigma[], preds[]:
-     * - dist[x]: distance de s à x.
-     * - sigma[x]: nb. de plus courts chemins de s vers x.
-     * - preds[x]: prédécesseurs de x sur des plus courts chemins depuis s.
-     * * Puis on accumule les dépendances delta[] en dépilant un stack (ordre
-     * topologique
-     * des distances décroissantes), ce qui permet de calculer les contributions sur
-     * chaque arête (v,w) appartenant à au moins un plus court chemin de s vers w.
-     * - Complexité: O(VE) par passe (toutes sources s).
-     * - Pour graphe non orienté, division finale par 2.
-     */
-    public static Map<Edge, Double> edgeBetweenness(SimpleGraph g) {
-        Map<Edge, Double> edge_betweenness = new HashMap<>(); // betweenness par arête
-        for (Edge e : g.edges()) {
-            edge_betweenness.put(e, 0.0);
-        }
+    
+    public static Map<Edge, Double> recalculateEdgeBetweenness(SimpleGraph g, Map<Edge,Double> edge_betweenness, Collection<Vertex> affectedVertices) {
 
-        for (Vertex s : g.vertices()) {
+        
+        for (Vertex s : affectedVertices) {
+
             // Phase BFS (plus courts chemins depuis s)
             Deque<Vertex> stack = new ArrayDeque<>(); // ordre de visite pour l'accumulation
             Map<Vertex, List<Vertex>> pred = new HashMap<>(); // prédécesseurs de w sur les plus courts chemins
             Map<Vertex, Integer> distances = new HashMap<>(); // distances depuis s
             Map<Vertex, Integer> sigma = new HashMap<>(); // nb. de plus courts chemins de s vers v
-            for (Vertex v : g.vertices()) {
+            for (Vertex v : affectedVertices) {
                 pred.put(v, new ArrayList<>());
                 distances.put(v, -1);
                 sigma.put(v, 0);
@@ -102,6 +132,9 @@ public class GirvanNewman {
                 Vertex v = queue.remove();
                 stack.push(v);
                 for (Vertex w : g.neighbors(v)) {
+                    // Reset edge_betweenness to zero
+                    edge_betweenness.put(new Edge(v,w), 0.0);
+
                     // Découverte de w
                     if (distances.get(w) < 0) {
                         distances.put(w, distances.get(v) + 1);

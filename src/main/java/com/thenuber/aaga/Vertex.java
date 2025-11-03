@@ -23,9 +23,7 @@ public class Vertex implements Comparable<Vertex> {
 
     @Override
     public int hashCode() {
-        int result = id;
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        return result;
+        return id;
     }
 
     @Override
@@ -38,7 +36,7 @@ public class Vertex implements Comparable<Vertex> {
 
     @Override
     public int compareTo(Vertex other) {
-        return Integer.compare(this.id, other.id);
+        return ((Integer)this.id).compareTo(other.id);
     }
 
 }

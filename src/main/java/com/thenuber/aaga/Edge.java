@@ -27,5 +27,5 @@ public class Edge {
     public int hashCode() { return u.hashCode() * 31 + v.hashCode(); }
 
     @Override
-    public String toString() { return u + "-" + v; }
+    public String toString() { return u + " - " + v; }
 }
