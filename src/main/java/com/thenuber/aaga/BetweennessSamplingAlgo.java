@@ -66,7 +66,7 @@ public class BetweennessSamplingAlgo {
     }
 
 
-    public void run(SimpleGraph g) {
+    public List<Map<Vertex, Integer>> run(SimpleGraph g) {
 
         // Calculate vertex diameter if not specified
         if (vertexDiameter == -1) {
@@ -79,14 +79,16 @@ public class BetweennessSamplingAlgo {
         System.out.println("Sample size r: " + r);
 
         Map<Edge, Double> bc = new HashMap<>(); // betweenness par arête
+        // initialize bc for every existing edge
+        for (Edge e : g.edges()) bc.put(e, 0.0);
 
         // Repeating r times
         for (int k = 0; k < r; k++) {
 
             // 1. Select random distinct nodes
-            Vertex u = (Vertex) g.randomNode();
-            Vertex v = (Vertex) g.randomNode();
-            while (u == v) {
+            Vertex u = g.randomNode();
+            Vertex v = g.randomNode();
+            while (u.equals(v)) {
                 v = g.randomNode();
             }
 
@@ -96,10 +98,32 @@ public class BetweennessSamplingAlgo {
             // 3. For every edge in the random shortest path, increase its approximate betweenness centrality
             for (Edge e : randomShortestPath) {
                 double value = bc.getOrDefault(e, 0.0);
-                bc.put(e, value+1/r);
+                // use floating point division to accumulate fractional counts
+                bc.put(e, value + 1.0 / (double) r);
             }
         }
 
+        // Use the approximate betweenness to create a ranking of edges and then
+        // remove them from highest to lowest while recording partitions after each removal.
+        List<Map<Vertex, Integer>> partitions = new ArrayList<>();
+
+        // Work on a copy of the graph so we don't destroy the input
+        SimpleGraph working = new SimpleGraph(g);
+
+        // Sort edges by approximate centrality descending
+        List<Edge> edgesByBc = new ArrayList<>(bc.keySet());
+        edgesByBc.sort((e1, e2) -> Double.compare(bc.get(e2), bc.get(e1)));
+
+        for (Edge e : edgesByBc) {
+            // remove edge if still present
+            if (working.containsEdge(e.u, e.v)) {
+                working.removeEdge(e.u, e.v);
+            }
+            // record current partition
+            partitions.add(working.getConnectedComponents());
+        }
+
+        return partitions;
     }
 
     public List<Edge> computeRandomShortestPath(SimpleGraph g, Vertex source, Vertex target) {
@@ -112,22 +136,29 @@ public class BetweennessSamplingAlgo {
         Map<Vertex, Integer> distances = new HashMap<>();
         Map<Vertex, Integer> sigma = new HashMap<>();
 
+        // initialize
+        for (Vertex x : g.vertices()) {
+            preds.put(x, new ArrayList<>());
+            distances.put(x, -1);
+            sigma.put(x, 0);
+        }
+        distances.put(source, 0);
         sigma.put(source, 1);
+
         Queue<Vertex> queue = new ArrayDeque<>();
         queue.add(source);
         while(!queue.isEmpty()) {
             Vertex v = queue.remove();
             for (Vertex w : g.neighbors(v)) {
                 // Calculate distance
-                if (!distances.containsKey(w)) {
+                if (distances.get(w) < 0) {
                     distances.put(w, distances.get(v) + 1);
                     queue.add(w);
                 }
 
                 // Check predecessor
-                if (distances.get(w) == distances.get(v)+1) {
+                if (distances.get(w) == distances.get(v) + 1) {
                     sigma.put(w, sigma.get(w) + sigma.get(v));
-                    preds.putIfAbsent(w, new ArrayList<>());
                     preds.get(w).add(v);
                 }
             }
@@ -136,11 +167,13 @@ public class BetweennessSamplingAlgo {
         // Second part: obtain the random path from source to target
         // Complexity: O(V)
 
-        Random rng = new Random();
+    Random rng = new Random();
 
-        List<Edge> randomShortestPath = new ArrayList<>();
-        Vertex v = target;
-        while(!v.equals(source)) {
+    List<Edge> randomShortestPath = new ArrayList<>();
+    Vertex v = target;
+    // if target unreachable, return empty path
+    if (distances.get(v) < 0) return randomShortestPath;
+    while(!v.equals(source)) {
             /**
              * Select a predecessor randomly
              * Probability of choosing predecesor u is sigma.get(u) / sigma.get(v)
@@ -149,18 +182,25 @@ public class BetweennessSamplingAlgo {
              * 2. Each predecesor "u" holds the next "sigma.get(u)" tickets, starting from 0
              * 3. The predecessor with the winner ticket wins
              */
-            int winner = rng.nextInt(sigma.get(v));
+            int total = sigma.get(v);
+            int winner = rng.nextInt(total);
             int tickets = 0;
 
-            Iterator<Vertex> it = preds.get(v).iterator();
             Vertex u = null;
-            do {
-                u = it.next();
-                tickets += sigma.get(u);
-            } while (tickets < winner);
+            for (Vertex cand : preds.get(v)) {
+                tickets += sigma.get(cand);
+                if (winner < tickets) {
+                    u = cand;
+                    break;
+                }
+            }
+            if (u == null) {
+                // fallback: pick first predecessor
+                u = preds.get(v).get(0);
+            }
 
             // Add edge to random shortest path
-            randomShortestPath.add(new Edge(u,v));
+            randomShortestPath.add(new Edge(u, v));
 
             // Now look predecessors of u
             v = u;

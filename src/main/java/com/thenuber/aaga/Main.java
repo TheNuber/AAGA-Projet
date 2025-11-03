@@ -64,13 +64,31 @@ public class Main {
             } else {
                 System.out.println("No partitions produced.");
             }
-        } else if (algorithm.equals("bsa")) {
+        } else if (algorithm.equals("bsa") || algorithm.equals("smp")) {
             // Betweenness sampling algorithm
-            // TODO
-
-            // Example of running Betweenness Sampling Algorithm
             BetweennessSamplingAlgo bsa = new BetweennessSamplingAlgo();
-            bsa.run(g);
+            List<Map<Vertex, Integer>> parts = bsa.run(g);
+
+            if (!parts.isEmpty()) {
+                // choose the partition with highest modularity
+                double bestQ = Double.NEGATIVE_INFINITY;
+                Map<Vertex, Integer> bestPartition = null;
+                for (Map<Vertex, Integer> p : parts) {
+                    double q = Modularity.compute(g, p);
+                    if (q > bestQ) {
+                        bestQ = q;
+                        bestPartition = p;
+                    }
+                }
+                if (bestPartition != null) {
+                    partition = bestPartition;
+                    modularity = bestQ;
+                } else {
+                    System.out.println("No partitions produced by BSA.");
+                }
+            } else {
+                System.out.println("No partitions produced by BSA.");
+            }
 
         } else {
             System.out.println("Unknown algorithm: " + algorithm);
