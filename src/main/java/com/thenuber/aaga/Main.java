@@ -15,6 +15,8 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
+        long startTime = System.nanoTime();
+
         // Parse args
 
         Map<String, String> opts = parseArgs(args);
@@ -64,7 +66,7 @@ public class Main {
             } else {
                 System.out.println("No partitions produced.");
             }
-        } else if (algorithm.equals("bsa") || algorithm.equals("smp")) {
+        } else if (algorithm.equals("smp")) {
             // Betweenness sampling algorithm
             BetweennessSamplingAlgo bsa = new BetweennessSamplingAlgo();
             List<Map<Vertex, Integer>> parts = bsa.run(g);
@@ -124,6 +126,10 @@ public class Main {
         }
 
         System.out.println("Wrote partition and metrics to " + outputFilePath + "_* files");
+
+        long elapsedNs = System.nanoTime() - startTime;
+        double elapsedSec = elapsedNs / 1_000_000_000.0;
+        System.out.printf("Execution time: %.3f s (%d ms)%n", elapsedSec, elapsedNs / 1_000_000);
     }
 
     private static Map<String, String> parseArgs(String[] args) {

@@ -1,0 +1,242 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# --- Step 1: Create an empty graph
+G = nx.Graph()
+
+# --- Step 2: Define edges as in your text
+edges_text = """
+A1	A2
+A2	A3
+A3	A4
+A4	A5
+A5	A6
+A6	A7
+A7	A8
+A8	A9
+A9	A10
+A10	A11
+A11	A12
+A12	A13
+A13	A14
+A14	A15
+A15	A16
+A16	A17
+A17	A18
+A18	A19
+A19	A20
+A20	A21
+A21	A22
+A22	A23
+A23	A24
+A24	A25
+A25	A26
+A26	A27
+A27	A28
+A28	A29
+A29	A30
+A30	A31
+A31	A32
+A32	A33
+A33	A34
+A34	A35
+A35	A36
+A36	A37
+A37	A38
+A38	A39
+A39	A40
+A40	A41
+A41	A42
+A42	A43
+A43	A44
+A44	A45
+A45	A46
+A46	A47
+A47	A48
+A48	A49
+A49	A50
+A50	A1
+A1	A3
+A2	A4
+A3	A5
+A4	A6
+A5	A7
+A6	A8
+A7	A9
+A8	A10
+A9	A11
+A10	A12
+A11	A13
+A12	A14
+A13	A15
+A14	A16
+A15	A17
+A16	A18
+A17	A19
+A18	A20
+A19	A21
+A20	A22
+A21	A23
+A22	A24
+A23	A25
+A24	A26
+A25	A27
+A26	A28
+A27	A29
+A28	A30
+A29	A31
+A30	A32
+A31	A33
+A32	A34
+A33	A35
+A34	A36
+A35	A37
+A36	A38
+A37	A39
+A38	A40
+A39	A41
+A40	A42
+A41	A43
+A42	A44
+A43	A45
+A44	A46
+A45	A47
+A46	A48
+A47	A49
+A48	A50
+A49	A1
+A50	A2
+B1	B2
+B2	B3
+B3	B4
+B4	B5
+B5	B6
+B6	B7
+B7	B8
+B8	B9
+B9	B10
+B10	B11
+B11	B12
+B12	B13
+B13	B14
+B14	B15
+B15	B16
+B16	B17
+B17	B18
+B18	B19
+B19	B20
+B20	B21
+B21	B22
+B22	B23
+B23	B24
+B24	B25
+B25	B26
+B26	B27
+B27	B28
+B28	B29
+B29	B30
+B30	B31
+B31	B32
+B32	B33
+B33	B34
+B34	B35
+B35	B36
+B36	B37
+B37	B38
+B38	B39
+B39	B40
+B40	B41
+B41	B42
+B42	B43
+B43	B44
+B44	B45
+B45	B46
+B46	B47
+B47	B48
+B48	B49
+B49	B50
+B50	B1
+B1	B3
+B2	B4
+B3	B5
+B4	B6
+B5	B7
+B6	B8
+B7	B9
+B8	B10
+B9	B11
+B10	B12
+B11	B13
+B12	B14
+B13	B15
+B14	B16
+B15	B17
+B16	B18
+B17	B19
+B18	B20
+B19	B21
+B20	B22
+B21	B23
+B22	B24
+B23	B25
+B24	B26
+B25	B27
+B26	B28
+B27	B29
+B28	B30
+B29	B31
+B30	B32
+B31	B33
+B32	B34
+B33	B35
+B34	B36
+B35	B37
+B36	B38
+B37	B39
+B38	B40
+B39	B41
+B40	B42
+B41	B43
+B42	B44
+B43	B45
+B44	B46
+B45	B47
+B46	B48
+B47	B49
+B48	B50
+B49	B1
+B50	B2
+A10	B10
+A20	B20
+A30	B30
+A40	B40
+A50	B50
+"""
+
+# --- Step 3: Parse edges
+edges = []
+for line in edges_text.strip().split("\n"):
+    if not line.startswith("#") and line.strip():
+        u, v = line.strip().split()
+        edges.append((u, v))
+
+G.add_edges_from(edges)
+
+# --- Step 4: Separate node groups
+community_A = [n for n in G.nodes if n.startswith("A")]
+community_B = [n for n in G.nodes if n.startswith("B")]
+
+# --- Step 5: Define layout
+pos = nx.spring_layout(G, seed=42, k=0.25)
+
+# --- Step 6: Draw the graph
+plt.figure(figsize=(10, 10))
+nx.draw_networkx_nodes(G, pos, nodelist=community_A, node_color="skyblue", label="Communauté A")
+nx.draw_networkx_nodes(G, pos, nodelist=community_B, node_color="lightcoral", label="Communauté B")
+nx.draw_networkx_edges(G, pos, alpha=0.4)
+plt.axis("off")
+plt.legend()
+
+# --- Step 7: Save as PNG
+plt.savefig("synthetic_communities.png", dpi=300, bbox_inches="tight")
+plt.show()

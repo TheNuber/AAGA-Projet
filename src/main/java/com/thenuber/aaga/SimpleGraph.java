@@ -154,8 +154,12 @@ public class SimpleGraph {
 
 
     public Vertex randomNode() {
+        int n = vertexCount();
+        if (n == 0) {
+            throw new IllegalStateException("Cannot pick a random node from an empty graph");
+        }
         Random rng = new Random();
-        return vertices.get(rng.nextInt(vertexCount()));
+        return vertices.get(rng.nextInt(n));
     }
 
     /**
