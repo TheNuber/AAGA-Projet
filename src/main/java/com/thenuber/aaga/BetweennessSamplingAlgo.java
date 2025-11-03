@@ -1,9 +1,23 @@
 package com.thenuber.aaga;
 
 import java.util.*;
-import com.thenuber.aaga.GirvanNewman;
 
 public class BetweennessSamplingAlgo {
+
+    private int vertexDiameter = -1;
+    private double epsilon = 0.2; // accuracy parameter : smaller = more accurate
+    private double delta = 0.3; // probability parameter : smaller = more reliable but increased sample size
+    private double c = 1.0; // constant (can be adjusted)
+
+    public BetweennessSamplingAlgo() { }
+
+    public void setVertexDiameter(int vertexDiameter) { this.vertexDiameter = vertexDiameter; }
+    public void setEpsilon(double epsilon) { this.epsilon = epsilon; }
+    public void setDelta(double delta) { this.delta = delta; }
+    public void setC(double c) { this.c = c; }
+
+
+
     /*
      * Computes the sample size r for betweenness approximation.
      * vertexDiameter : VD(G) - the vertex-diameter of the graph
@@ -12,7 +26,7 @@ public class BetweennessSamplingAlgo {
      * c : constant (theoretical or empirical)
      * return sample size r
      */
-    public static int computeSampleSize(int vertexDiameter, double epsilon, double delta, double c) {
+    public int computeSampleSize() {
         if (vertexDiameter <= 2) {
             throw new IllegalArgumentException("vertexDiameter must be greater than 2");
         }
@@ -30,149 +44,110 @@ public class BetweennessSamplingAlgo {
     }
 
     public void run(SimpleGraph g) {
-        // Example parameters (set as needed)
-        double epsilon = 0.2; // accuracy parameter : smaller = more accurate
-        double delta = 0.3; // probability parameter : smaller = more reliable but increased sample size
-        double c = 1.0; // constant (can be adjusted)
 
-        int vertexDiameter = g.getVertexDiameterApproximation();
+        if (vertexDiameter == -1) {
+            vertexDiameter = g.getVertexDiameterApproximation();
+        }
         System.out.println("Vertex diameter VD(G): " + vertexDiameter);
 
         // 0. Calculate sample size r
-        int r = computeSampleSize(vertexDiameter, epsilon, delta, c);
+        int r = computeSampleSize();
         System.out.println("Sample size r: " + r);
 
         Set<String> vertices = g.vertices();
         Random rnd = new Random();
 
-        int i = 0;
-        int j = 0;
-
         Map<Edge, Double> bc = new HashMap<>(); // betweenness par arête
 
-        // 1. Repeating r times
+        // Repeating r times
         for (int k = 0; k < r; k++) {
-            i = rnd.nextInt(vertices.size());
-            j = rnd.nextInt(vertices.size());
+
+            // 1. Select random distinct nodes
+            int i = rnd.nextInt(g.vertexCount());
+            int j = rnd.nextInt(g.vertexCount());
             while (i == j) {
-                j = rnd.nextInt(vertices.size());
+                j = rnd.nextInt(g.vertexCount());
             }
             String u = (String) vertices.toArray()[i];
             String v = (String) vertices.toArray()[j];
 
-            // 2. Calculate shortest paths between u and v (all shortest paths S_uv)
-            List<List<String>> suv = computeAllShortestPaths(g, u, v);
-            System.out.println("Sampled pair: u=" + u + " v=" + v + " -> |S_uv| = " + suv.size());
-            // optional: print first few paths
-            if (!suv.isEmpty()) {
-                int limit = Math.min(3, suv.size());
-                for (int p = 0; p < limit; p++) {
-                    System.out.println(" path[" + p + "] = " + suv.get(p));
-                }
-            }
-            // 3. Select a path p from Suv uniformly at random
-            if (suv.isEmpty()) { 
-                continue;
-            }
-            
-            List<String> p = suv.get(rnd.nextInt(suv.size()));
-            System.out.println("Selected path p: " + p);
+            // 2. Compute a random shortest path between them
+            List<Edge> randomShortestPath = computeRandomShortestPath(g, u, v);
 
-            // 4. For every edge e in p, increment bc[e] by 1/r
-            String der = "";
-            for (String n : p) {
-                if (der != "") {
-                    Edge e = new Edge(der, n);
-                    double d = bc.getOrDefault(e, 0.0);
-                    bc.put(e, d+1/r);
-                };
-                der = n;
+            // 3. For every edge in the random shortest path, increase its approximate betweenness centrality
+            for (Edge e : randomShortestPath) {
+                double value = bc.getOrDefault(e, 0.0);
+                bc.put(e, value+1/r);
             }
         }
 
     }
 
-    /**
-     * Compute all shortest paths between source and target in an unweighted SimpleGraph.
-     * Uses BFS to compute distances and predecessor lists, then backtracks to enumerate
-     * all shortest paths. Returns an empty list if source/target missing or unreachable.
-     */
-    public static List<List<String>> computeAllShortestPaths(SimpleGraph g, String source, String target) {
-        List<List<String>> result = new ArrayList<>();
-        if (source == null || target == null) return result;
-        // quick presence check
-        if (!g.vertices().contains(source) || !g.vertices().contains(target)) return result;
+    public static List<Edge> computeRandomShortestPath(SimpleGraph g, String source, String target) {
 
-        // BFS: distance map and predecessor lists
-        Map<String, Integer> dist = new HashMap<>();
+        // First part: compute values for predecessors and number of shortest paths from source
+        // Very similar to first part of Girvan Newman algorithm
+        // Complexity: O(V+E)
+
         Map<String, List<String>> preds = new HashMap<>();
+        Map<String, Integer> distances = new HashMap<>();
+        Map<String, Integer> sigma = new HashMap<>();
+
+        sigma.put(source, 1);
         Queue<String> queue = new ArrayDeque<>();
-
-        dist.put(source, 0);
         queue.add(source);
-
-        while (!queue.isEmpty()) {
+        while(!queue.isEmpty()) {
             String v = queue.remove();
-            int dv = dist.get(v);
             for (String w : g.neighbors(v)) {
-                // if w not seen yet
-                if (!dist.containsKey(w)) {
-                    dist.put(w, dv + 1);
-                    preds.put(w, new ArrayList<>());
-                    preds.get(w).add(v);
+                // Calculate distance
+                if (!distances.containsKey(w)) {
+                    distances.put(w, distances.get(v) + 1);
                     queue.add(w);
-                } else {
-                    // if we found another shortest predecessor
-                    if (dist.get(w) == dv + 1) {
-                        preds.get(w).add(v);
-                    }
+                }
+
+                // Check predecessor
+                if (distances.get(w) == distances.get(v)+1) {
+                    sigma.put(w, sigma.get(w) + sigma.get(v));
+                    preds.putIfAbsent(w, new ArrayList<>());
+                    preds.get(w).add(v);
                 }
             }
         }
 
-        // if target unreachable, return empty
-        if (!dist.containsKey(target)) return result;
+        // Second part: obtain the random path from source to target
+        // Complexity: O(V)
 
-        // Backtrack from target to source building all shortest paths using preds
-        LinkedList<String> path = new LinkedList<>();
-        path.addFirst(target);
+        Random rng = new Random();
 
-        // recursive DFS via stack/explicit recursion
-        Deque<Iterator<String>> stack = new ArrayDeque<>();
-        Map<String, Iterator<String>> iterMap = new HashMap<>();
+        List<Edge> randomShortestPath = new ArrayList<>();
+        String v = target;
+        while(!v.equals(source)) {
+            /**
+             * Select a predecessor randomly
+             * Probability of choosing predecesor u is sigma.get(u) / sigma.get(v)
+             * 
+             * 1. Generate a random winner ticket in [0, sigma.get(v))
+             * 2. Each predecesor "u" holds the next "sigma.get(u)" tickets, starting from 0
+             * 3. The predecessor with the winner ticket wins
+             */
+            int winner = rng.nextInt(sigma.get(v));
+            int tickets = 0;
 
-        String cur = target;
-        while (true) {
-            if (cur.equals(source)) {
-                // record current path (from source .. target)
-                result.add(new ArrayList<>(path));
-            }
+            Iterator<String> it = preds.get(v).iterator();
+            String u = null;
+            do {
+                u = it.next();
+                tickets += sigma.get(u);
+            } while (tickets < winner);
 
-            List<String> curPreds = preds.getOrDefault(cur, Collections.emptyList());
-            Iterator<String> it = iterMap.computeIfAbsent(cur, k -> curPreds.iterator());
+            // Add edge to random shortest path
+            randomShortestPath.add(new Edge(u,v));
 
-            if (it.hasNext()) {
-                String p = it.next();
-                // push iterator for cur and move to predecessor
-                stack.push(it);
-                cur = p;
-                path.addFirst(cur);
-            } else {
-                // backtrack
-                if (stack.isEmpty()) break;
-                // pop current iterator and move back one step in path
-                stack.pop();
-                // remove the head (which corresponds to current node)
-                path.removeFirst();
-                // set cur to the new head (if any) or source
-                if (!path.isEmpty()) {
-                    cur = path.getFirst();
-                } else break;
-            }
+            // Now look predecessors of u
+            v = u;
         }
 
-        // The paths were built from source->...->target because we used addFirst when backtracking,
-        // but ensure each path starts at source and ends at target (current construction does that).
-        return result;
+        return randomShortestPath;
     }
+
 }
