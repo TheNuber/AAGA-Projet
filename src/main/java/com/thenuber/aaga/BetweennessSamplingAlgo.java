@@ -67,13 +67,16 @@ public class BetweennessSamplingAlgo implements GraphAlgorithm {
 
         Map<Edge, Double> bc = new HashMap<>(); // betweenness par arête
 
+        // Calculate connected components
+        Map<Vertex,Integer> ccPartition = input.getConnectedComponents();
+
         // Repeating r times
         for (int k = 0; k < r; k++) {
 
-            // 1. Select random distinct nodes
+            // 1. Select random distinct nodes, must be in the same connected component
             Vertex u = (Vertex) input.randomNode();
             Vertex v = (Vertex) input.randomNode();
-            while (u == v) {
+            while (u == v || (ccPartition.get(u) != ccPartition.get(v))) {
                 v = input.randomNode();
             }
 
@@ -149,6 +152,7 @@ public class BetweennessSamplingAlgo implements GraphAlgorithm {
         Map<Vertex, Integer> sigma = new HashMap<>();
 
         sigma.put(source, 1);
+        distances.put(source, 0);
         Queue<Vertex> queue = new ArrayDeque<>();
         queue.add(source);
         while(!queue.isEmpty()) {
@@ -162,7 +166,7 @@ public class BetweennessSamplingAlgo implements GraphAlgorithm {
 
                 // Check predecessor
                 if (distances.get(w) == distances.get(v)+1) {
-                    sigma.put(w, sigma.get(w) + sigma.get(v));
+                    sigma.put(w, sigma.getOrDefault(w,0) + sigma.get(v));
                     preds.putIfAbsent(w, new ArrayList<>());
                     preds.get(w).add(v);
                 }
