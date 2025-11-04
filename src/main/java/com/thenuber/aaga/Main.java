@@ -44,17 +44,28 @@ public class Main {
         SimpleGraph g = GraphLoader.loadEdgeList(inputFilePath, delim);
 
 
-        // Calculate betweenness
+        // Run algorithm
 
+        long startTime = System.nanoTime();
+        List<Map<Vertex, Integer>> parts = graphAlgorithm.run(g);
+        long endTime = System.nanoTime();
+
+        // choose the partition with highest modularity
         Map<Vertex, Integer> partition = null;
         double modularity = -1.0;
 
-        List<Map<Vertex, Integer>> parts = graphAlgorithm.run(g);
-        if (!parts.isEmpty()) {
-            partition = parts.get(parts.size() - 1);
-            modularity = Modularity.compute(g, partition);
+        double bestQ = Double.NEGATIVE_INFINITY;
+        Map<Vertex, Integer> bestPartition = null;
+        for (Map<Vertex, Integer> p : parts) {
+            double q = Modularity.compute(g, p);
+            if (q > bestQ) {
+                bestQ = q;
+                bestPartition = p;
+            }
         }
-
+        partition = bestPartition;
+        modularity = bestQ;
+  
         // Write results
 
         // Check that output directory exists
@@ -84,6 +95,14 @@ public class Main {
         }
 
         System.out.println("Wrote partition and metrics to " + outputFilePath + "_* files");
+
+
+        // Write elapsed time
+
+        long elapsedNs = endTime - startTime;
+        double elapsedSec = elapsedNs / 1_000_000_000.0;
+        System.out.printf("Execution time: %.3f s (%d ms)%n", elapsedSec, elapsedNs / 1_000_000);
+
     }
 
     private static Map<String, String> parseArgs(String[] args) {

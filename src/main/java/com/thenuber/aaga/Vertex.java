@@ -18,7 +18,7 @@ public class Vertex implements Comparable<Vertex> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false; 
         Vertex node = (Vertex) o;
-        return id != node.id;
+        return id == node.id;
     }
 
     @Override
