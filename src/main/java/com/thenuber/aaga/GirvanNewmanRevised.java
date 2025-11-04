@@ -1,7 +1,6 @@
 package com.thenuber.aaga;
 
 import java.util.*;
-import java.util.stream.Collector;
 
 /**
  * GirvanNewman
