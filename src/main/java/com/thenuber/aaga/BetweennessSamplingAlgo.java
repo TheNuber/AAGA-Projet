@@ -74,12 +74,11 @@ public class BetweennessSamplingAlgo implements GraphAlgorithm {
             return bc;
         }
         
-        
         Random rng = new Random();
 
         for (int k = 0; k < r; k++) {
-            // Sample random connected distinct nodes
-
+            // Sample a random connected component 
+            // No matter the probability distribution since all will be treated
             int randomCC = ccWithEdges.get(rng.nextInt(ccWithEdges.size()));
             ArrayList<Vertex> connectedNodes = connectedComponents.get(randomCC);
 
@@ -177,24 +176,24 @@ public class BetweennessSamplingAlgo implements GraphAlgorithm {
         Vertex v = target;
 
         while (!v.equals(source)) {
-            List<Vertex> vPreds = preds.get(v);
-            if (vPreds == null || vPreds.isEmpty()) return Collections.emptyList();
-
-            int sigmaV = sigma.getOrDefault(v, 1);
-            int winner = rng.nextInt(sigmaV);
+            /**
+             * Select a predecessor randomly
+             * Probability of choosing predecesor u is sigma.get(u) / sigma.get(v)
+             * 
+             * 1. Generate a random winner ticket in [0, sigma.get(v))
+             * 2. Each predecesor "u" holds the next "sigma.get(u)" tickets, starting from 0
+             * 3. The predecessor with the winner ticket wins
+             */
+            int winner = rng.nextInt(sigma.get(v));
             int tickets = 0;
+
+            Iterator<Vertex> it = preds.get(v).iterator();
             Vertex u = null;
-
-            for (Vertex p : vPreds) {
-                tickets += sigma.getOrDefault(p, 1);
-                if (tickets > winner) {
-                    u = p;
-                    break;
-                }
-            }
-
-            if (u == null) return Collections.emptyList();
-
+            do {
+                u = it.next();
+                tickets += sigma.get(u);
+            } while (tickets < winner);            
+            
             randomShortestPath.add(new Edge(u, v));
             v = u;
         }
