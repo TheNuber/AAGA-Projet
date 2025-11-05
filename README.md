@@ -33,6 +33,8 @@ java -jar target\aaga-projet-0.1.0-SNAPSHOT.jar -i data\sample.edgelist -o resul
 
 ## Datasets
 
+Here are some sources for datasets that may or may not have been tested. You can try them if you like.
+
 #### Social networks
 
 - https://snap.stanford.edu/data/ego-Facebook.html
