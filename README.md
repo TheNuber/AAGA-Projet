@@ -61,5 +61,5 @@ java -jar target\aaga-projet-0.1.0-SNAPSHOT.jar -i data\sample.edgelist -o resul
 
 => TO RUN BETWENNESS SAMPLING ALGO :
 
-java -jar target\aaga-projet-0.1.0-SNAPSHOT.jar -i data\sample.edgelist -o results\sample -a smp
+java -jar target\aaga-projet-0.1.0-SNAPSHOT.jar -i data\sample.edgelist -o results\sample -a bsa
 
