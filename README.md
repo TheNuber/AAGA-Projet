@@ -1,63 +1,7 @@
-# AAGA-Projet (Java pur)
-
-Ce projet implémente l’algorithme de Girvan–Newman en Java « pur » (sans framework, ni bibliothèques runtime externes). Il inclut une CLI, le calcul de la modularité Q, et une structure de graphe minimale.
-
-## Contenu
-- Implémentation Girvan–Newman standard: `src/main/java/com/thenuber/aaga/GirvanNewman.java`
-- Modularity Q: `src/main/java/com/thenuber/aaga/Modularity.java`
-- Loader edge-list: `src/main/java/com/thenuber/aaga/GraphLoader.java`
-- Graphe minimal: `src/main/java/com/thenuber/aaga/SimpleGraph.java`, `Edge.java`
-- CLI: `src/main/java/com/thenuber/aaga/Main.java`
-- Dataset exemple: `data/sample.edgelist`
-
-## Compilation (Windows, cmd.exe)
-```
-mvn -DskipTests package
-```
-
-## Exécution (exemple)
-```
-java -jar target\aaga-projet-0.1.0-SNAPSHOT.jar -i data\sample.edgelist -o results\sample
-```
-
-## Options CLI
-- `-i` chemin du fichier edge-list (2 colonnes par ligne)
-- `-d` regex du délimiteur (défaut: `\t`)
-- `-o` préfixe de sortie (défaut: `out`)
-- `-a` algorithme: `gn` (défaut)
-
-## Prochaines étapes
-- Variantes d’accélération: approximation par échantillonnage, recomputation périodique/incrémentale.
-- Mesure systématique du temps et de la modularité sur jeux de données réels.
-- Rapport détaillant méthodologie, complexité et résultats.
-
-## Datasets
-
-Here are some sources for datasets that may or may not have been tested. You can try them if you like.
-
-#### Social networks
-
-- https://snap.stanford.edu/data/ego-Facebook.html
-- https://snap.stanford.edu/data/github-social.html
-
-#### Scientific collaborations
-
-- https://snap.stanford.edu/data/ca-AstroPh.html
-- https://snap.stanford.edu/data/ca-CondMat.html
-
-#### Roadmaps
-
-- https://snap.stanford.edu/data/roadNet-CA.html
-- https://snap.stanford.edu/data/roadNet-PA.html
-
-
-
-
-To execute it :
-
+to compile the project :
 mvn -DskipTests package
 
-
+=> TO RUN THE GIRVAN NEWMAN ALGO :
 
 java -jar target\aaga-projet-0.1.0-SNAPSHOT.jar -i data\sample.edgelist -o results\sample
 
