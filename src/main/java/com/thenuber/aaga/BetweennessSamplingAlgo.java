@@ -25,6 +25,7 @@ public class BetweennessSamplingAlgo implements GraphAlgorithm {
         List<Map<Vertex, Integer>> partitions = new ArrayList<>();
 
         while (g.edgeCount() > 0) {
+            System.out.println(g.edgeCount());
             Map<Edge, Double> eb = sampledEdgeBetweenness(g);
 
             double max = eb.values().stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
@@ -148,27 +149,18 @@ public class BetweennessSamplingAlgo implements GraphAlgorithm {
 
         while (!queue.isEmpty()) {
             Vertex v = queue.remove();
-            Collection<Vertex> neighbors = g.neighbors(v);
-
-            if (neighbors == null || neighbors.isEmpty()) continue;
-
-            for (Vertex w : neighbors) {
+            for (Vertex w : g.neighbors(v)) {
                 if (!distances.containsKey(w)) {
-                    distances.put(w, distances.getOrDefault(v, 0) + 1);
+                    distances.put(w, distances.get(v) + 1);
                     queue.add(w);
                 }
 
                 if (distances.get(w) == distances.get(v) + 1) {
-                    sigma.put(w, sigma.getOrDefault(w, 0) + sigma.getOrDefault(v, 0));
+                    sigma.put(w, sigma.getOrDefault(w, 0) + sigma.get(v));
                     preds.putIfAbsent(w, new ArrayList<>());
                     preds.get(w).add(v);
                 }
             }
-        }
-
-        // If target not reached, no path
-        if (!distances.containsKey(target) || !preds.containsKey(target)) {
-            return Collections.emptyList();
         }
 
         List<Edge> randomShortestPath = new ArrayList<>();
@@ -192,12 +184,11 @@ public class BetweennessSamplingAlgo implements GraphAlgorithm {
             do {
                 u = it.next();
                 tickets += sigma.get(u);
-            } while (tickets < winner);            
+            } while (tickets < winner);
             
             randomShortestPath.add(new Edge(u, v));
             v = u;
         }
-
         return randomShortestPath;
     }
 }
