@@ -1,6 +1,8 @@
 package com.thenuber.aaga;
 
+import java.lang.reflect.Array;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class BetweennessSamplingAlgo implements GraphAlgorithm {
 
@@ -44,35 +46,53 @@ public class BetweennessSamplingAlgo implements GraphAlgorithm {
     }
 
     public Map<Edge, Double> sampledEdgeBetweenness(SimpleGraph input) {
+
+        Map<Edge, Double> bc = new HashMap<>();
+
         if (vertexDiameter == -1) {
             vertexDiameter = getVertexDiameterApproximation(input);
         }
-        //System.out.println("Vertex diameter VD(G): " + vertexDiameter);
-
         int r = computeSampleSize();
-        //System.out.println("Sample size r: " + r);
 
-        Map<Edge, Double> bc = new HashMap<>();
+        // Precompute connected components in which there is at least one path
+
         Map<Vertex, Integer> ccPartition = input.getConnectedComponents();
+        Map<Integer, ArrayList<Vertex>> connectedComponents = new HashMap<>();
+        for (Map.Entry<Vertex, Integer> e : ccPartition.entrySet()) {
+            connectedComponents.putIfAbsent(e.getValue(), new ArrayList<>());
+            connectedComponents.get(e.getValue()).add(e.getKey());
+        }
+        ArrayList<Integer> ccWithEdges = new ArrayList<>();
+        for (Map.Entry<Integer, ArrayList<Vertex>>e : connectedComponents.entrySet()) {
+            if (e.getValue().size() > 1) {
+                ccWithEdges.add(e.getKey());
+            }
+        }
+
+        // If all nodes are isolated, return directly
+        if (ccWithEdges.isEmpty()) {
+            return bc;
+        }
+        
+        
         Random rng = new Random();
 
         for (int k = 0; k < r; k++) {
-            Vertex u = input.randomNode();
-            Vertex v = input.randomNode();
-            int safety = 0;
+            // Sample random connected distinct nodes
 
-            // Ensure distinct and connected vertices
-            while ((u.equals(v) || !Objects.equals(ccPartition.get(u), ccPartition.get(v))) && safety < 1000) {
-                v = input.randomNode();
-                safety++;
+            int randomCC = ccWithEdges.get(rng.nextInt(ccWithEdges.size()));
+            ArrayList<Vertex> connectedNodes = connectedComponents.get(randomCC);
+
+            Vertex u = connectedNodes.get(rng.nextInt(connectedNodes.size()));
+            Vertex v = connectedNodes.get(rng.nextInt(connectedNodes.size()));
+            while (u.equals(v)) {
+                v = connectedNodes.get(rng.nextInt(connectedNodes.size()));
             }
 
-            if (safety >= 1000) continue; // avoid infinite loops if disconnected
-
+            // Sample random path
             List<Edge> randomShortestPath = computeRandomShortestPath(input, u, v);
 
-            if (randomShortestPath.isEmpty()) continue; // skip unreachable pairs
-
+            // Increase edge betweenness
             for (Edge e : randomShortestPath) {
                 double value = bc.getOrDefault(e, 0.0);
                 bc.put(e, value + 1.0 / r);
