@@ -25,7 +25,6 @@ public class BetweennessSamplingAlgo implements GraphAlgorithm {
         List<Map<Vertex, Integer>> partitions = new ArrayList<>();
 
         while (g.edgeCount() > 0) {
-            System.out.println(g.edgeCount());
             Map<Edge, Double> eb = sampledEdgeBetweenness(g);
 
             double max = eb.values().stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
